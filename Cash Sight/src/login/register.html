@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CashSight | Create Account</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="auth-card" aria-labelledby="create-account-title">
+        <header class="brand-header">
+          <div class="brand-icon" aria-hidden="true">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M7 15h-3a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v3"
+              />
+              <path
+                d="M7 9m0 1a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1z"
+              />
+              <path d="M12 14a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+            </svg>
+          </div>
+          <h1>CashSight</h1>
+        </header>
+
+        <div class="auth-copy">
+          <h2 id="create-account-title">Create your account</h2>
+          <p>Get started with CashSight by creating your free account</p>
+        </div>
+
+        <form class="auth-form" action="/signup" method="POST">
+          <div class="field-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="email@example.com"
+              required
+            />
+            <!-- <p class="field-hint">
+              Use a valid email address for account verification
+            </p> -->
+          </div>
+
+          <div class="field-group">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required />
+            <!-- <p class="field-hint">
+              Use a mix of letters, numbers, and symbols for stronger security
+            </p> -->
+          </div>
+
+          <div class="field-group">
+            <label for="confirm-password">Confirm Password</label>
+            <input
+              id="confirm-password"
+              name="confirm-password"
+              type="password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="submit-button">Create Account</button>
+        </form>
+
+        <p class="signin-copy">
+          Already have an account?
+          <a href="#">Sign in here.</a>
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
