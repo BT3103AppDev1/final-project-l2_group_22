@@ -147,3 +147,11 @@ input:focus {
   text-decoration: none;
   font-weight: 700;
 }
+
+#error-message {
+  margin-top: 12px;
+  color: #d9534f;
+  font-size: 13px;
+  text-align: center;
+  white-space: pre-line;
+}
