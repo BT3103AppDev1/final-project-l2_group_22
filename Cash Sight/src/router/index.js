@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../login/Login.vue'
 import Register from '../login/Register.vue'
+import ResetPassword from '../login/Reset-Password.vue'
+import ChangeEmail from '../login/Change-Email.vue'
 import Grand from '../Grand.vue'
 
 const router = createRouter({
@@ -19,6 +21,16 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: Register,
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPassword,
+    },
+    {
+      path: '/change-email',
+      name: 'change-email',
+      component: ChangeEmail,
     },
     {
       path: '/grand',

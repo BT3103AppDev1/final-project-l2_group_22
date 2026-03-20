@@ -5,6 +5,13 @@
       <p>You are logged in successfully.</p>
       <router-link to="/login">Back to Login</router-link>
     </section>
+
+    <div>
+      <p class="signin-copy">
+        Change your email?
+        <router-link to="/change-email">Change it here.</router-link>
+      </p>
+    </div>
   </main>
 </template>
 
