@@ -198,6 +198,16 @@ export default {
 				this.lastNameError = true;
 			}
 
+      if (firstNameValue && !/^[a-zA-Z]+$/.test(firstNameValue)) {
+        errors.push("First name can only contain letters");
+        this.firstNameError = true;
+      }
+
+      if (lastNameValue && !/^[a-zA-Z]+$/.test(lastNameValue)) {
+        errors.push("Last name can only contain letters");
+        this.lastNameError = true;
+      }
+
 			if (emailValue === "" || emailValue == null) {
 				errors.push("Email is required");
 				this.emailError = true;
