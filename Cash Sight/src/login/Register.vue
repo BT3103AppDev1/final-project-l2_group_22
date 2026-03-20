@@ -108,6 +108,7 @@ import {
 	getAuth,
 	updateProfile,
 	validatePassword,
+	sendEmailVerification,
 } from "firebase/auth";
 import firebaseApp, { firebaseConfigError } from "../firebase";
 
@@ -149,27 +150,40 @@ export default {
 			}
 
 			const auth = getAuth(firebaseApp);
-			const status = await validatePassword(auth, this.password);
-			if (!status.isValid) {
-				this.passwordError = true;
-				this.repeatPasswordError = true;
-				this.errorMessage = this.mapPasswordPolicyStatus(status).join("\n");
-				return;
-			}
 
-			createUserWithEmailAndPassword(auth, this.email, this.password)
-				.then(async (userCredential) => {
-					const user = userCredential.user;
-					await updateProfile(user, {
-						displayName: `${this.firstName} ${this.lastName}`.trim(),
-					});
-					this.errorMessage = "";
-					this.$router.push("/login");
-				})
-				.catch((error) => {
-					const errorCode = error.code;
-					this.errorMessage = this.mapFirebaseAuthError(errorCode);
-				});
+            try {
+                const status = await validatePassword(auth, this.password);
+                if (!status.isValid) {
+                    this.passwordError = true;
+                    this.repeatPasswordError = true;
+                    this.errorMessage = this.mapPasswordPolicyStatus(status).join("\n");
+                    return;
+                }
+
+                const userCredential = await createUserWithEmailAndPassword(
+                    auth,
+                    this.email,
+                    this.password,
+                );
+
+				const user = userCredential.user;
+
+                await Promise.all([
+                    updateProfile(user, {
+                        displayName: `${this.firstName} ${this.lastName}`.trim(),
+                    }),
+                    sendEmailVerification(user)
+                ]);
+
+                alert("Account created! Please check your email to verify your account before logging in.");
+                this.$router.push("/login");
+
+                this.errorMessage = "";
+
+            } catch (error) {
+                    const errorCode = error.code;
+                    this.errorMessage = this.mapFirebaseAuthError(errorCode);
+                }
 		},
 		resetErrorFlags() {
 			this.firstNameError = false;

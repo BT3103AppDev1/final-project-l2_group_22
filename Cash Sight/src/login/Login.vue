@@ -94,31 +94,34 @@ export default {
   },
   methods: {
     handleSubmit() {
-      const errors = this.getLoginFormErrors(this.email, this.password);
-      this.errorMessage = errors.join("\n");
+        const errors = this.getLoginFormErrors(this.email, this.password);
+        this.errorMessage = errors.join("\n");
 
-      if (errors.length > 0) {
-        return;
-      }
+        if (errors.length > 0) return;
 
-      if (!firebaseApp) {
-        this.errorMessage = firebaseConfigError || "Firebase is not configured";
-        return;
-      }
+        if (!firebaseApp) {
+            this.errorMessage = firebaseConfigError || "Firebase is not configured";
+            return;
+        }
 
-      const auth = getAuth(firebaseApp);
-      signInWithEmailAndPassword(auth, this.email, this.password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          if (user) {
+        const auth = getAuth(firebaseApp);
+        signInWithEmailAndPassword(auth, this.email, this.password)
+            .then((userCredential) => {
+            const user = userCredential.user;
+            
+            if (!user.emailVerified) {
+                this.errorMessage = "Please verify your email before signing in. Check your inbox for the link.";
+                signOut(auth); 
+                return; 
+            }
+
             this.errorMessage = "";
             this.$router.push("/grand");
-          }
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          this.errorMessage = this.mapFirebaseAuthError(errorCode);
-        });
+            })
+            .catch((error) => {
+            const errorCode = error.code;
+            this.errorMessage = this.mapFirebaseAuthError(errorCode);
+            });
     },
     getLoginFormErrors(emailValue, passwordValue) {
       const errors = [];
