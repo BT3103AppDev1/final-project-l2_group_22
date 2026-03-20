@@ -73,13 +73,18 @@
         <router-link to="/register">Create one.</router-link>
       </p>
 
+      <p class="signin-copy">
+        Forgot your password?
+        <router-link to="/reset-password">Reset it here.</router-link>
+      </p>
+
 
     </section>
   </main>
 </template>
 
 <script>
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import firebaseApp, { firebaseConfigError } from "../firebase";
 
 export default {
