@@ -1,16 +1,36 @@
 import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCzQrdYUuQ-0Q5ShlxW_NxQH3NBtcGuaXY",
-  authDomain: "bt3103l2grp22.firebaseapp.com",
-  projectId: "bt3103l2grp22",
-  storageBucket: "bt3103l2grp22.firebasestorage.app",
-  messagingSenderId: "961765222199",
-  appId: "1:961765222199:web:06a3541ef3bb10cf31dcb2",
-  measurementId: "G-MZCMWSW5CD"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
+const requiredFirebaseKeys = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_STORAGE_BUCKET',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID',
+];
+
+const missingFirebaseKeys = requiredFirebaseKeys.filter(
+  (key) => !import.meta.env[key],
+);
+
+const firebaseConfigError =
+  missingFirebaseKeys.length > 0
+    ? `Missing Firebase environment variables: ${missingFirebaseKeys.join(', ')}`
+    : '';
+
+const firebaseApp = firebaseConfigError ? null : initializeApp(firebaseConfig);
+const auth = firebaseApp ? getAuth(firebaseApp) : null;
 
 export default firebaseApp;
+export { auth };
+export { firebaseConfigError };

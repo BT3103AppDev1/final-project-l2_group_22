@@ -14,9 +14,11 @@
     "lint:eslint": "eslint . --fix --cache"
   },
   "dependencies": {
+    "firebase": "^12.11.0",
     "pinia": "^3.0.4",
+    "router": "^2.2.0",
     "vue": "^3.5.29",
-    "vue-router": "^5.0.3"
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
