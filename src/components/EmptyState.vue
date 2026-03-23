@@ -41,17 +41,26 @@ export default {
 .add-button {
   display: inline-block;
   margin-top: 8px;
-  padding: 10px 24px;
-  background-color: var(--brand);
-  color: white;
+  padding: 12px 28px;
+  background-color: #5e9486;
+  color: #ffffff !important;
   text-decoration: none;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background-color 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(94, 148, 134, 0.4);
 }
 
 .add-button:hover {
   background-color: #4d7d70;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(94, 148, 134, 0.5);
+  color: #ffffff !important;
+}
+
+.add-button:active {
+  transform: translateY(0);
+  color: #ffffff !important;
 }
 </style>
