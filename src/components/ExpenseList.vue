@@ -1,3 +1,7 @@
+// Assuming the structure is:
+// users (collection) -> {userID} (document) -> Transactions (document) -> Expenses (subcollection)
+
+
 <template>
   <div class="expenses-container">
     <div v-if="loading">Loading...</div>
