@@ -28,6 +28,11 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: Settings
+  },
+  {
+    path: '/add-transaction',
+    name: 'AddTransaction',
+    component: () => import('@/views/AddTransaction.vue')
   }
 ]
 
