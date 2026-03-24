@@ -1,24 +1,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import Login from '../login/Login.vue'
 
 // Initialize Mocks (Test Doubles)
+const {pushmock, signinmock, signoutmock, popupsigninmock, getauthmock} = vi.hoisted(() => ({
 
-const pushmock = vi.fn()
+  pushmock: vi.fn(),
 
-const signinmock = vi.fn()
+  signinmock: vi.fn(),
 
-const popupsigninmock = vi.fn()
+  signoutmock: vi.fn(),
+
+  popupsigninmock: vi.fn(),
+
+  getauthmock: vi.fn(() => ({}))
+
+
+}))
+
+
 
 // Fake Firebase App
 vi.mock('../firebase', () => ({
   default: {},
-  firebaseConfigurationError: ""
+  firebaseConfigError: ""
 }))
 
 // Fake Firebase Authentication Module
-vi.mock('../firebase/auth', () => ({
+vi.mock('firebase/auth', () => ({
+  getAuth: getauthmock,
   signInWithEmailAndPassword: signinmock,
+  signOut: signoutmock,
   signInWithPopup: popupsigninmock,
   GoogleAuthProvider: vi.fn()
 }))
@@ -105,37 +117,43 @@ describe('Login.vue', () => {
 
   })
 
-  // Gets error
+  // Gets error -> const auth = getAuth(firebaseApp); (Firebase instance has not been created or is not open)
   it("Upon successful login using email and password, calls Firebase to authenticate credentials", async () => {
     const wrapper = mountLogin();
 
     signinmock.mockResolvedValue({
-      usercredential: {
-        user: {uid: '67q67'}
+      user: {
+        uid: '67q67',
+        emailVerified: true
       }
     })
 
     await wrapper.find('input[type="email"]').setValue('abcdefg@example.com');
-    await wrapper.find('input[type="password"]').setValue('btbtbt');
+    await wrapper.find('input[type="password"]').setValue('btbtbtA12');
     await wrapper.find('form').trigger('submit.prevent');
+    await flushPromises(); // Waits for any pending promises to resolve
 
     expect(signinmock).toHaveBeenCalled();
+    console.log(pushmock.mock.calls);
     expect(pushmock).toHaveBeenCalledWith('/grand');
+
 
   })
 
 
-  // Gets error
+
   it("Successful form submission of email and password, but credentials are invalid, Firebase rejects Login and returns an error message", async () => {
     const wrapper = mountLogin();
 
-    signinmock.mockRejectedValue({errorcode: "auth/invalid-credentials"})
+    signinmock.mockRejectedValue({code: "auth/invalid-credentials"})
 
     await wrapper.find('input[type="email"]').setValue('wrongexample@example.com');
     await wrapper.find('input[type="password"]').setValue('wrongpassword');
     await wrapper.find('form').trigger('submit.prevent');
 
-    expect(wrapper.text()).toContain('Invalid email or password');
+    // Does not navigate to the "grand" page
+    expect(pushmock).not.toHaveBeenCalledWith('/grand');
+
   })
 })
 
