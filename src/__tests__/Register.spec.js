@@ -1,28 +1,39 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromise, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import Register from '../login/Register.vue'
 
+
 // Initialize Mocks (Test Doubles)
+const {pushmock, createuserwithemailandpasswordmock, updateprofilemock, validatepasswordmock, getauthmock, sendemailverificationmock} = vi.hoisted(() => ({
 
-const pushmock = vi.fn()
+  pushmock: vi.fn(),
 
-const signupmock = vi.fn()
+  createuserwithemailandpasswordmock: vi.fn(),
 
-const validatepasswordmock = vi.fn()
+  updateprofilemock: vi.fn(),
 
-const updateprofilemock = vi.fn()
+  validatepasswordmock: vi.fn(),
+
+  sendemailverificationmock: vi.fn(),
+
+  getauthmock: vi.fn(() => ({}))
+
+}))
 
 // Fake Firebase App
 vi.mock('../firebase', () => ({
   default: {},
-  firebaseConfigurationError: ""
+  firebaseConfigError: ""
 }))
 
 // Fake Firebase Authentication Module
-vi.mock('../firebase/auth', () => ({
-  signupwithemailandpassword: signupmock,
-  validatepassword: validatepasswordmock,
-  updateprofile: updateprofilemock
+vi.mock('firebase/auth', () => ({
+  createUserWithEmailAndPassword: createuserwithemailandpasswordmock,
+  validatePassword: validatepasswordmock,
+  updateProfile: updateprofilemock,
+  push: pushmock,
+  getAuth: getauthmock,
+  sendEmailVerification: sendemailverificationmock
 }))
 
 describe('Register.vue', () => {
@@ -77,7 +88,7 @@ describe('Register.vue', () => {
     expect(wrapper.text()).toContain('Please confirm your password');
 
 
-    expect(signupmock).not.toHaveBeenCalled();
+    expect(createuserwithemailandpasswordmock).not.toHaveBeenCalled();
   })
 
   it("Register displays an error when a name, email, and/or password of invalid format is entered", async () => {
@@ -99,7 +110,7 @@ describe('Register.vue', () => {
     expect(wrapper.text()).toContain('Password must contain at least one digit');
     expect(wrapper.text()).toContain('Passwords do not match');
 
-    expect(signupmock).not.toHaveBeenCalled();
+    expect(createuserwithemailandpasswordmock).not.toHaveBeenCalled();
 
   })
 
@@ -132,19 +143,23 @@ describe('Register.vue', () => {
 
   })
 
-  // Gets error -> const auth = getAuth(firebaseApp); (Firebase instance has not been created or is not open)
+
   it("Upon successful registration using email and password, calls Firebase to create a new user", async () => {
     const wrapper = mountRegister();
 
     validatepasswordmock.mockResolvedValue({ isValid: true });
 
-    signupmock.mockResolvedValue({
-      usercredential: {
-        user: {uid: '6767'}
+    createuserwithemailandpasswordmock.mockResolvedValue({
+      user: {
+        uid: '6767'
       }
     })
 
-    updateprofilemock.mockResolvedValue({});
+    updateprofilemock.mockResolvedValue({
+      displayName: 'Chusong Surtis'
+    });
+
+    sendemailverificationmock.mockResolvedValue({});
 
     await wrapper.find('input[type="email"]').setValue('abcdefg@example.com');
     await wrapper.find('input[type="password"]').setValue('btbtbt123A');
@@ -155,10 +170,40 @@ describe('Register.vue', () => {
     await wrapper.find('form').trigger('submit.prevent');
     await flushPromises();
 
-    expect(signupmock).toHaveBeenCalled();
+
     expect(validatepasswordmock).toHaveBeenCalled();
+    expect(getauthmock).toHaveBeenCalled();
+    expect(createuserwithemailandpasswordmock).toHaveBeenCalled();
     expect(updateprofilemock).toHaveBeenCalled();
-    expect(pushmock).toHaveBeenCalledWith('/login');
+    expect(sendemailverificationmock).toHaveBeenCalled();
+
+
+  })
+
+  it("Input entered are valid and pass validation checks, but Firebase registration fails due to reasons such as email already in use", async () => {
+
+    const wrapper = mountRegister();
+
+    validatepasswordmock.mockResolvedValue({ isValid: true });
+
+    createuserwithemailandpasswordmock.mockRejectedValue({ code: 'auth/email-already-in-use' });
+
+    await wrapper.find('input[type="email"]').setValue('abcdefg@example.com');
+    await wrapper.find('input[type="password"]').setValue('btbtbt123A');
+    await wrapper.find('#first-name').setValue('Chusong');
+    await wrapper.find('#last-name').setValue('Surtis');
+    await wrapper.find('#confirm-password').setValue('btbtbt123A');
+
+    await wrapper.find('form').trigger('submit.prevent');
+    await flushPromises();
+
+    expect(validatepasswordmock).toHaveBeenCalled();
+    expect(getauthmock).toHaveBeenCalled();
+    expect(createuserwithemailandpasswordmock).toHaveBeenCalled();
+    expect(updateprofilemock).not.toHaveBeenCalled();
+    expect(sendemailverificationmock).not.toHaveBeenCalled();
+
+    expect(wrapper.text()).toContain('This email is already in use');
 
   })
 })
