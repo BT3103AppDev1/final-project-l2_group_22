@@ -3,6 +3,7 @@
     <section class="grand-card">
       <h1>Grand Page</h1>
       <p>You are logged in successfully.</p>
+      <p class="clock" aria-live="polite">Auto logout in: {{ remainingIdleTime }}</p>
       <router-link to="/login">Back to Login</router-link>
     </section>
 
@@ -14,6 +15,28 @@
     </div>
   </main>
 </template>
+
+<script setup>
+import { computed } from "vue";
+import { remainingIdleMs } from "./idleSession";
+
+const remainingIdleTime = computed(() => {
+  return formatDuration(remainingIdleMs.value);
+});
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+  const ss = String(seconds).padStart(2, "0");
+
+  return `${hh}:${mm}:${ss}`;
+}
+</script>
 
 <style scoped>
 .grand-page {
@@ -42,6 +65,11 @@
 .grand-card p {
   margin: 0 0 16px;
   color: #5e6c66;
+}
+
+.clock {
+  font-weight: 600;
+  color: #24302c;
 }
 
 .grand-card a {

@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { getAuth, fetchSignInMethodsForEmail, sendPasswordResetEmail } from "firebase/auth";
 import firebaseApp, { firebaseConfigError } from "../firebase";
 
 export default {
@@ -69,7 +69,8 @@ export default {
   },
   methods: {
     async handleSubmit() {
-      const errors = this.getResetFormErrors(this.email);
+      const normalizedEmail = this.email.trim();
+      const errors = this.getResetFormErrors(normalizedEmail);
       this.errorMessage = errors.join("\n");
       this.successMessage = "";
 
@@ -85,11 +86,18 @@ export default {
       const auth = getAuth(firebaseApp);
 
       try {
-        await sendPasswordResetEmail(auth, this.email);
+        const signInMethods = await fetchSignInMethodsForEmail(auth, normalizedEmail);
+
+        if (!signInMethods || signInMethods.length === 0) {
+          this.errorMessage = this.mapFirebaseAuthError("auth/user-not-found");
+          return;
+        }
+
+        await sendPasswordResetEmail(auth, normalizedEmail);
         this.errorMessage = "";
         this.successMessage = "Password reset email sent. Please check your inbox.";
       } catch (error) {
-        this.errorMessage = this.mapFirebaseAuthError(error.code);
+        this.errorMessage = this.mapFirebaseAuthError(error?.code);
       }
     },
     getResetFormErrors(emailValue) {

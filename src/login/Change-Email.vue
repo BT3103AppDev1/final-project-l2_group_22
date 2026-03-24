@@ -69,7 +69,8 @@ export default {
   },
   methods: {
     async handleSubmit() {
-      const errors = this.getFormErrors(this.newEmail);
+      const normalizedNewEmail = this.newEmail.trim();
+      const errors = this.getFormErrors(normalizedNewEmail);
       this.errorMessage = errors.join("\n");
       this.successMessage = "";
 
@@ -90,12 +91,29 @@ export default {
         return;
       }
 
+      if (user.email && user.email.trim().toLowerCase() === normalizedNewEmail.toLowerCase()) {
+        this.errorMessage = this.mapFirebaseAuthError("auth/email-already-in-use");
+        return;
+      }
+
       try {
-        await verifyBeforeUpdateEmail(user, this.newEmail);
+        const actionCodeSettings = {
+          url: `${window.location.origin}/login`,
+          handleCodeInApp: false,
+        };
+
+        await verifyBeforeUpdateEmail(user, normalizedNewEmail, actionCodeSettings);
         this.errorMessage = "";
-        this.successMessage = "Verification email sent to your new address. Please verify it to complete the change.";
+        this.successMessage =
+          "Verification email sent to your new address. Please verify it to complete the change.";
       } catch (error) {
-        this.errorMessage = this.mapFirebaseAuthError(error.code);
+        if (error?.code === "auth/internal-error") {
+          this.errorMessage =
+            "Change-email verification is not supported by Firebase Auth Emulator yet. Please test this flow against your live Firebase Authentication project.";
+          return;
+        }
+
+        this.errorMessage = this.mapFirebaseAuthError(error?.code, error?.message);
       }
     },
     getFormErrors(emailValue) {
@@ -117,16 +135,23 @@ export default {
       this.errorMessage = "";
       this.successMessage = "";
     },
-    mapFirebaseAuthError(errorCode) {
+    mapFirebaseAuthError(errorCode, fallbackMessage) {
       const errorMap = {
         "auth/invalid-email": "Please enter a valid email address",
         "auth/email-already-in-use": "This email is already in use",
         "auth/requires-recent-login": "Please sign in again before changing your email",
+        "auth/missing-continue-uri":
+          "Email action configuration is incomplete. Please contact support",
+        "auth/invalid-continue-uri": "Email action link is invalid. Please contact support",
+        "auth/unauthorized-continue-uri":
+          "This domain is not authorized in Firebase Authentication settings",
+        "auth/operation-not-allowed": "Email change is not enabled for this project",
+        "auth/internal-error": "Firebase encountered an internal error. Please try again",
         "auth/network-request-failed": "Network error. Please check your connection",
         "auth/too-many-requests": "Too many attempts. Please try again later",
       };
 
-      return errorMap[errorCode] || "Unable to change email. Please try again";
+      return errorMap[errorCode] || fallbackMessage || "Unable to change email. Please try again";
     },
   },
 };
