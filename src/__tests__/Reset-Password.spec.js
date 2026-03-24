@@ -128,16 +128,11 @@ describe('Reset-Password.vue', () => {
 
   })
 
-  // Check arguments for this again (returns error)
   it("Email entered is valid and pass validation checks, but Firebase registration fails due to reasons such as email not found in Firebase", async () => {
 
     const wrapper = mountResetPassword();
 
-    getauthmock.mockReturnValue({
-      currentUser: { uid: '123', email: 'oldemail@example.com' }
-    });
-
-    sendpasswordresetemailmock.mockRejectedValue({ code: 'auth/email-not-found' });
+    sendpasswordresetemailmock.mockRejectedValue({ code: 'auth/user-not-found' });
 
     await wrapper.find('input[type="email"]').setValue('abcdefg999@example.com');
     await wrapper.find('form').trigger('submit.prevent');
