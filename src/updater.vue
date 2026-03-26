@@ -21,7 +21,8 @@ export const useTransactionStore = defineStore('transactions', {
   actions: {
     init(userId) {
       this.loading = true;
-      ED.readingTransactions(userId, (data) => {
+      
+      this.stopReading = TransactionService.readingTransactions(userId, (data) => {
         this.transactions = data;
         this.loading = false;
       });
