@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ED } from '../services/EditDelete.ts';
+import { ED } from '../services/editDelete.ts';
 
 export const useTransactionStore = defineStore('transactions', {
   state: () => ({
