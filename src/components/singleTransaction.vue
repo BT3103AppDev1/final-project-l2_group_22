@@ -51,13 +51,13 @@ const handleSave = async () => {
 };
 
 const handleDelete = async () => {
-  isProcessing = true;
+  isProcessing.value = true;
   try {
     await ED.deleteTransaction(props.transaction.id);
     confirmDelete.value = false;
     emit('close'); // Return to list
   } finally {
-    isProcessing = false;
+    isProcessing.value = false;
   }
 };
 </script>
