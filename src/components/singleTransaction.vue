@@ -40,13 +40,13 @@ const isProcessing = ref(false);
 const editForm = reactive({ ...props.transaction });
 
 const handleSave = async () => {
-  isProcessing = true;
+  isProcessing.value = true;
   try {
     // Meets NF-01: Operation typically completes < 2s with Firestore
     await TransactionService.updateTransaction(props.transaction.id, editForm);
     isEditing.value = false;
   } finally {
-    isProcessing = false;
+    isProcessing.value = false;
   }
 };
 
