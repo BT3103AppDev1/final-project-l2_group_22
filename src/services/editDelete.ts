@@ -13,7 +13,7 @@ import {
 
 const transactionsRef = collection(db, 'transactions');
 
-export const TransactionService = {
+export const ED = {
   // Real-time listener for the list
   readingTransactions(userId, callback) {
     const q = query(
