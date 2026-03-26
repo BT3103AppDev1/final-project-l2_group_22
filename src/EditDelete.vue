@@ -15,7 +15,7 @@ const transactionsRef = collection(db, 'transactions');
 
 export const TransactionService = {
   // Real-time listener for the list
-  subscribeToTransactions(userId, callback) {
+  readingTransactions(userId, callback) {
     const q = query(
       transactionsRef, 
       where('userId', '==', userId),
