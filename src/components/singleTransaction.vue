@@ -43,7 +43,7 @@ const handleSave = async () => {
   isProcessing.value = true;
   try {
     // Meets NF-01: Operation typically completes < 2s with Firestore
-    await TransactionService.updateTransaction(props.transaction.id, editForm);
+    await ED.updateTransaction(props.transaction.id, editForm);
     isEditing.value = false;
   } finally {
     isProcessing.value = false;
@@ -53,7 +53,7 @@ const handleSave = async () => {
 const handleDelete = async () => {
   isProcessing = true;
   try {
-    await TransactionService.deleteTransaction(props.transaction.id);
+    await ED.deleteTransaction(props.transaction.id);
     confirmDelete.value = false;
     emit('close'); // Return to list
   } finally {
