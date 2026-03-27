@@ -2,23 +2,29 @@
     <div class="web-page">
         <header class="page-header">
             <h1>Transactions</h1>
+            <div class="header-icons">
+                <button class="icon-button">🔽</button>
+                <button class="icon-button">↕️</button>
+            </div>
         </header>
 
         <div class="tab-bar">
-            <button
-                class="tab-button"
-                :class="{ active: activeTab === 'expense' }"
-                @click="activeTab = 'expense'"
-            >
-                Expenses
-            </button>
-            <button
-                class="tab-button"
-                :class="{ active: activeTab === 'income' }"
-                @click="activeTab = 'income'"
-            >
-                Income
-            </button>
+            <div class="tab-container">
+                <button
+                    class="tab-button"
+                    :class="{ active: activeTab === 'expense' }"
+                    @click="activeTab = 'expense'"
+                >
+                    Expenses
+                </button>
+                <button
+                    class="tab-button"
+                    :class="{ active: activeTab === 'income' }"
+                    @click="activeTab = 'income'"
+                >
+                    Income
+                </button>
+            </div>
         </div>
 
         <main class="page-content">
@@ -28,7 +34,8 @@
                     <TransactionItem :transaction="transaction" />
                 </li>
             </ul>
-            <EmptyState v-else />
+            <EmptyState v-else :activeTab="activeTab" />
+            <button class="fab" @click="$router.push('/add-transaction')">+</button>
         </main>
 
         <BottomNav currentTab="transactions" />
@@ -91,6 +98,9 @@ export default {
 .page-header {
     padding: 20px;
     border-bottom: 2px solid darkgray;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .page-header h1 {
@@ -99,29 +109,51 @@ export default {
     color: var(--text-900);
 }
 
+.header-icons {
+    display: flex;
+    gap: 12px;
+}
+
+.icon-button {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
 .tab-bar {
     display: flex;
-    gap: 24px;
+    justify-content: center;
     padding: 16px 20px;
     background: white;
     border-bottom: 1px solid var(--border);
 }
 
+.tab-container {
+    display: inline-flex;
+    gap: 8px;
+    background: #f0f0f0;
+    padding: 6px;
+    border-radius: 24px;
+}
+
 .tab-button {
     border: none;
     background: transparent;
-    padding: 8px 0;
+    padding: 10px 24px;
     color: var(--text-700);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
+    border-radius: 20px;
     transition: all 0.2s;
 }
 
 .tab-button.active {
-    color: var(--brand);
-    border-bottom-color: var(--brand);
+    color: var(--text-900);
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .page-content {
@@ -141,13 +173,39 @@ export default {
     list-style: none;
     padding: 0;
     margin: 0;
-    background: white;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .transactions-list li {
     margin: 0;
+}
+
+.fab {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #3d5248;
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+.fab:hover {
+    background: #2f4038;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    transform: scale(1.05);
+}
+
+.fab:active {
+    transform: scale(0.95);
 }
 </style>
