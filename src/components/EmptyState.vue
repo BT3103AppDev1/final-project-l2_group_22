@@ -1,61 +1,106 @@
 <template>
   <div class="empty-state">
-    <div class="empty-icon">📋</div>
-    <div class="empty-message">No transactions yet</div>
-    <router-link to="/add-transaction" class="add-button">+ Add Transaction</router-link>
+    <div class="empty-icon-circle">
+      <span class="dollar-icon">$</span>
+    </div>
+    <div class="empty-message">{{ message }}</div>
+    <div class="empty-subtitle">{{ subtitle }}</div>
+    <router-link :to="addTransactionPath" class="add-button">{{ buttonLabel }}</router-link>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'EmptyState'
+  name: 'EmptyState',
+  props: {
+    activeTab: {
+      type: String,
+      default: 'expense'
+    }
+  },
+  computed: {
+    tabLabel() {
+      return this.activeTab === 'expense' ? 'Expense' : 'Income'
+    },
+    message() {
+      return `No ${this.tabLabel}s Yet`
+    },
+    subtitle() {
+      if (this.activeTab === 'expense') {
+        return 'Start tracking your spending by adding your first expense transaction.'
+      } else {
+        return 'Start tracking your income by adding your first income transaction.'
+      }
+    },
+    buttonLabel() {
+      return `+ Add ${this.tabLabel}`
+    },
+    addTransactionPath() {
+      return '/add-transaction'
+    }
+  }
 }
 </script>
 
 <style scoped>
-:root {
-  --brand: #5e9486;
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 48px 24px;
+  padding: 64px 24px;
   text-align: center;
-  color: #94a3b8;
 }
 
-.empty-icon {
-  font-size: 48px;
-  opacity: 0.6;
+.empty-icon-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #e8ecea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dollar-icon {
+  font-size: 32px;
+  color: #aab8b3;
+  font-weight: 600;
 }
 
 .empty-message {
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #24302c;
+  margin-top: 8px;
+}
+
+.empty-subtitle {
+  font-size: 14px;
   color: #5e6c66;
+  max-width: 300px;
+  line-height: 1.5;
 }
 
 .add-button {
   display: inline-block;
-  margin-top: 8px;
-  padding: 12px 28px;
-  background-color: #5e9486;
+  margin-top: 16px;
+  padding: 12px 32px;
+  background-color: #4a6e5e;
   color: #ffffff !important;
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: 24px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   transition: background-color 0.2s, transform 0.2s;
-  box-shadow: 0 2px 8px rgba(94, 148, 134, 0.4);
+  box-shadow: 0 2px 8px rgba(74, 110, 94, 0.3);
 }
 
 .add-button:hover {
-  background-color: #4d7d70;
+  background-color: #3d5a4f;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(94, 148, 134, 0.5);
+  box-shadow: 0 4px 12px rgba(74, 110, 94, 0.4);
   color: #ffffff !important;
 }
 
