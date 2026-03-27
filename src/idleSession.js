@@ -2,7 +2,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { ref } from "vue";
 import { auth } from "./firebase";
 
-const IDLE_TIMEOUT_MS = 1 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
 const IDLE_CHECK_INTERVAL_MS = 1000;
 const ACTIVITY_THROTTLE_MS = 1000;
 const PUBLIC_ROUTES = new Set(["/login", "/register", "/reset-password"]);
