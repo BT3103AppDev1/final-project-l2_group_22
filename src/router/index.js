@@ -30,9 +30,16 @@ const routes = [
     component: Settings
   },
   {
-    path: '/add-transaction',
+    path: '/transactions/add',
     name: 'AddTransaction',
-    component: () => import('@/views/AddTransaction.vue')
+    component: () => import('@/views/AddTransaction.vue'),
+    props: route => ({ type: route.query.type })
+  },
+  {
+    path: '/add-transaction',
+    redirect: to => {
+      return { path: '/transactions/add', query: to.query }
+    }
   }
 ]
 

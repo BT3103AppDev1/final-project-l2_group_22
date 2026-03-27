@@ -36,7 +36,7 @@ export default {
       return `+ Add ${this.tabLabel}`
     },
     addTransactionPath() {
-      return '/add-transaction'
+      return { path: '/transactions/add', query: { type: this.activeTab } }
     }
   }
 }
