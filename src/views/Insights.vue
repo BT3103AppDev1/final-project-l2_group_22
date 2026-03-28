@@ -133,11 +133,11 @@
                 <div class="split-row">
                     <div class="col-left">
                         <p class="col-label">AVG PER VISIT</p>
-                        <p class="col-value">$12.40</p>
+                        <p class="col-value">$12.40</p><!--Return AVG Amount spent at Top Merchant here-->
                     </div>
 
                     <div class="col-right">
-                        <p class="col-label">VISITS THIS PERIOD</p>
+                        <p class="col-label">VISITS THIS PERIOD</p> <!--Return visits at Top Merchant here-->
                         <p class="col-value">7</p>
                     </div>
                 </div>
