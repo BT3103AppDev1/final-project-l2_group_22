@@ -3,11 +3,15 @@
         <header class="page-header">
             <h1>Welcome Back!</h1>
         </header>
+
         <main class="page-content">
+          <!--Everything here is placeholder, need to work on backend logic. 
+            Every Value here that needs to be derived from the backend will be commented
+            In order to prevent breaking the entire page just edit lines that are commented-->
             <section class="cashflow-card">
                 <div class="cashflow-content">
                     <p class = "cashflow-label">Net Cashflow</p>
-                    <h2 class="cashflow-amount">$4,000.00</h2>
+                    <h2 class="cashflow-amount">$4,000.00</h2><!--Return net cashflow-->
                     <p class = "cashflow-subtext">Positive Balance this period</p>
                 </div>
 
@@ -18,14 +22,14 @@
                 <div class="metric-card">
                     <div class="stat-icon income-icon">↗</div>
                     <p class="card-label">Total Income</p>
-                    <h3 class="income-text">$5000.00</h3>
-                    <p class="small-text">3 transactions</p>
+                    <h3 class="income-text">$5000.00</h3><!--Return total income-->
+                    <p class="small-text">3 transactions</p><!--Return total txn of income-->
                 </div>
 
                 <div class="metric-card">
                     <div class="stat-icon expense-icon">↘</div>
-                    <p class="card-label">Total Expense</p>
-                    <h3 class="expense-text">$1000.00</h3>
+                    <p class="card-label">Total Expense</p><!--Return total expense-->
+                    <h3 class="expense-text">$1000.00</h3><!--Return total txn for expense-->
                     <p class="small-text">5 transactions</p>
                 </div>
             </section>
@@ -34,21 +38,21 @@
                 <div class="category-header">
                     <div>
                     <p class="section-label">TOP SPENDING CATEGORY</p>
-                    <h3 class="category-name">Groceries</h3>
+                    <h3 class="category-name">Groceries</h3><!--Return top category-->
                     </div>
-                    <div class="category-icon">🧺</div>
+                    <div class="category-icon">🧺</div><!--Return top category icon-->
                 </div>
 
                 <div class="category-body">
                     <div class="category-left">
-                    <p class="category-amount">$200.00</p>
+                    <p class="category-amount">$200.00</p><!--Return top category amount-->
                     <div class="progress-bar">
                         <div class="progress-fill"></div>
                     </div>
                     </div>
 
                     <div class="category-right">
-                    <p class="category-percent">25.0%</p>
+                    <p class="category-percent">25.0%</p><!--Return top category amount over total expense-->
                     <p class="category-note">of total expenses</p>
                     </div>
                 </div>
@@ -58,23 +62,23 @@
                 <p class="section-label">PERIOD SUMMARY</p>
 
                 <div class="summary-row">
-                    <span>Total Transactions</span>
+                    <span>Total Transactions</span><!--Return total txn over period-->
                     <strong>8</strong>
                 </div>
 
                 <div class="summary-row">
                     <span>Average Income</span>
-                    <strong class="income-text-small">$1000</strong>
+                    <strong class="income-text-small">$1000</strong><!--Return total income over period-->
                 </div>
 
                 <div class="summary-row">
                     <span>Average Expense</span>
-                    <strong class="expense-text-small">$200</strong>
+                    <strong class="expense-text-small">$200</strong><!--Return total expenses over period-->
                 </div>
 
                 <div class="summary-row">
                     <span>Savings Rate</span>
-                    <strong>80.0%</strong>
+                    <strong>80.0%</strong><!--Return total expenses over total income over period-->
                 </div>
             </section>
         </main>
