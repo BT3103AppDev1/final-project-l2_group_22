@@ -35,6 +35,7 @@
             </svg>
             <span class="nav-label">Settings</span>
         </button>
+
     </nav>
 </template>
 

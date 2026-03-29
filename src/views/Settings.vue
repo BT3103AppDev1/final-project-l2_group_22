@@ -50,7 +50,7 @@
             
             <p class="desc">Account</p>
             <div class="content settings-group">
-                <button class="menu-item">
+                <button class="menu-item" @click="$router.push('/profile')">
                     <div class="menu-left">
                         <div class="menu-icon-circle">
                             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -229,8 +229,7 @@ export default {
 
 .menu-icon {
     width: 32px;
-    height: 32
-    px;
+    height: 32px;
 }
 
 .menu-text {

@@ -28,7 +28,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { ED } from '../services/editDelete.ts';
+import { ED } from '../services/editDelete.js';
 
 const props = defineProps(['transaction']);
 const emit = defineEmits(['close']);

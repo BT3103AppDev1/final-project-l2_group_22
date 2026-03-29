@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
 
 const requiredKeys = [
   'VITE_FIREBASE_API_KEY',
@@ -13,6 +14,7 @@ const missing = requiredKeys.filter(k => !import.meta.env[k])
 
 export let app = null
 export let db = null
+export let auth = null
 export const firebaseConfigError = missing.length
   ? `Missing Firebase env vars: ${missing.join(', ')}`
   : null
@@ -27,4 +29,7 @@ if (!firebaseConfigError) {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
   })
   db = getFirestore(app)
+  auth = getAuth(app)
 }
+
+export default app
