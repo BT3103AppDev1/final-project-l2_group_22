@@ -68,6 +68,15 @@
         </button>
        </div>
 
+      <div class="rememberMe" :class="{ rememberMe }">
+          <label for= "rememberMe">Remember Me</label>
+          <input
+            id="rememberMe"
+            v-model="rememberMe"
+            type="checkbox"
+          />
+      </div>
+
       <p class="signin-copy">
         Do not have an account?
         <router-link to="/register">Create one.</router-link>
@@ -84,8 +93,9 @@
 </template>
 
 <script>
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 import firebaseApp, { firebaseConfigError } from "../firebase";
+import { setRememberMeCookie, getRememberMeCookie, clearRememberMeCookie } from "@/utils/rememberMe";
 
 export default {
   data() {
@@ -95,10 +105,14 @@ export default {
       errorMessage: "",
       emailError: false,
       passwordError: false,
+      rememberMe: false
     };
   },
   methods: {
-    handleSubmit() {
+    mounted() {
+        this.rememberMe = getRememberMeCookie();
+    },
+    async handleSubmit() {
         const errors = this.getLoginFormErrors(this.email, this.password);
         this.errorMessage = errors.join("\n");
 
@@ -110,14 +124,17 @@ export default {
         }
 
         const auth = getAuth(firebaseApp);
+        await setPersistence(auth, this.rememberMe ? browserLocalPersistence : browserSessionPersistence);
+        setRememberMeCookie(this.rememberMe);
+
         signInWithEmailAndPassword(auth, this.email, this.password)
             .then((userCredential) => {
             const user = userCredential.user;
-            
+
             if (!user.emailVerified) {
                 this.errorMessage = "Please verify your email before signing in. Check your inbox for the link.";
-                signOut(auth); 
-                return; 
+                signOut(auth);
+                return;
             }
 
             this.errorMessage = "";
@@ -171,9 +188,11 @@ export default {
       return errorMap[errorCode] || "Unable to sign in. Please try again";
     },
 
-    googleSignIn() {
+    async googleSignIn() {
       let provider = new GoogleAuthProvider();
       const auth = getAuth();
+      await setPersistence(auth, this.rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      setRememberMeCookie(this.rememberMe);
       signInWithPopup(auth, provider)
         .then((result) => {
           // Handle successful sign-in
@@ -190,7 +209,7 @@ export default {
           this.errorMessage = this.mapFirebaseAuthError(errorCode);
         });
     }
-  },
+  }
 };
 </script>
 
@@ -343,6 +362,17 @@ input:focus {
   border-color: #d9534f;
 }
 
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;;
+}
+
+.input[id = "rememberMe"] {
+  width: auto;
+  height: auto;
+}
+
 #error-message {
   margin-top: 12px;
   color: #d9534f;
@@ -354,6 +384,7 @@ input:focus {
 
 #google-signin {
   margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .google-btn {
