@@ -3,10 +3,7 @@
     <section class="grand-card">
       <h1>Grand Page</h1>
       <p>You are logged in successfully.</p>
-      <p class="clock" aria-live="polite">Auto logout in: {{ remainingIdleTime }}</p>
-      <button class="logout-btn" type="button" @click="logout">
-        Log out
-      </button>
+      <button class="logout-btn" type="button" @click="logout">Log out</button>
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
     </section>
 
@@ -20,16 +17,11 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
-import { remainingIdleMs } from "./idleSession";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { getAuth, signOut } from "firebase/auth";
 
 const router = useRouter();
-
-const remainingIdleTime = computed(() => {
-  return formatDuration(remainingIdleMs.value);
-});
 
 const errorMessage = ref("");
 
@@ -44,19 +36,6 @@ async function logout() {
     errorMessage.value = "Failed to log out. Please try again.";
     console.error("Logout failed:", error);
   }
-}
-
-function formatDuration(ms) {
-  const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  const hh = String(hours).padStart(2, "0");
-  const mm = String(minutes).padStart(2, "0");
-  const ss = String(seconds).padStart(2, "0");
-
-  return `${hh}:${mm}:${ss}`;
 }
 </script>
 
@@ -87,11 +66,6 @@ function formatDuration(ms) {
 .grand-card p {
   margin: 0 0 16px;
   color: #5e6c66;
-}
-
-.clock {
-  font-weight: 600;
-  color: #24302c;
 }
 
 .grand-card a {

@@ -12,9 +12,7 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path
-              d="M7 15h-3a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v3"
-            />
+            <path d="M7 15h-3a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v3" />
             <path
               d="M7 9m0 1a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1z"
             />
@@ -53,28 +51,44 @@
           />
         </div>
 
+        <label for="rememberMe" class="remember-me">
+          <span class="remember-me__copy">
+            <span class="remember-me__title">Remember Me</span>
+            <span class="remember-me__hint">Stay signed in on this device</span>
+          </span>
+          <input
+            id="rememberMe"
+            v-model="rememberMe"
+            type="checkbox"
+            class="remember-me__checkbox"
+          />
+        </label>
+
         <button type="submit" class="submit-button">Sign In</button>
       </form>
 
       <div id="google-signin">
         <button @click="googleSignIn" class="google-btn" type="button">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
-            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-            </svg>
-            <span>Sign in with Google</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+            <path
+              fill="#FFC107"
+              d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
+            />
+            <path
+              fill="#FF3D00"
+              d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
+            />
+            <path
+              fill="#4CAF50"
+              d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
+            />
+            <path
+              fill="#1976D2"
+              d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
+            />
+          </svg>
+          <span>Sign in with Google</span>
         </button>
-       </div>
-
-      <div class="rememberMe" :class="{ rememberMe }">
-          <label for= "rememberMe">Remember Me</label>
-          <input
-            id="rememberMe"
-            v-model="rememberMe"
-            type="checkbox"
-          />
       </div>
 
       <p class="signin-copy">
@@ -86,16 +100,27 @@
         Forgot your password?
         <router-link to="/reset-password">Reset it here.</router-link>
       </p>
-
-
     </section>
   </main>
 </template>
 
 <script>
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import firebaseApp, { firebaseConfigError } from "../firebase";
-import { setRememberMeCookie, getRememberMeCookie, clearRememberMeCookie } from "@/utils/rememberMe";
+import {
+  setRememberMeCookie,
+  getRememberMeCookie,
+  clearRememberMeCookie,
+} from "@/utils/rememberMe";
 
 export default {
   data() {
@@ -105,45 +130,49 @@ export default {
       errorMessage: "",
       emailError: false,
       passwordError: false,
-      rememberMe: false
+      rememberMe: false,
     };
   },
   methods: {
     mounted() {
-        this.rememberMe = getRememberMeCookie();
+      this.rememberMe = getRememberMeCookie();
     },
     async handleSubmit() {
-        const errors = this.getLoginFormErrors(this.email, this.password);
-        this.errorMessage = errors.join("\n");
+      const errors = this.getLoginFormErrors(this.email, this.password);
+      this.errorMessage = errors.join("\n");
 
-        if (errors.length > 0) return;
+      if (errors.length > 0) return;
 
-        if (!firebaseApp) {
-            this.errorMessage = firebaseConfigError || "Firebase is not configured";
+      if (!firebaseApp) {
+        this.errorMessage = firebaseConfigError || "Firebase is not configured";
+        return;
+      }
+
+      const auth = getAuth(firebaseApp);
+      await setPersistence(
+        auth,
+        this.rememberMe ? browserLocalPersistence : browserSessionPersistence,
+      );
+      setRememberMeCookie(this.rememberMe);
+
+      signInWithEmailAndPassword(auth, this.email, this.password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+
+          if (!user.emailVerified) {
+            this.errorMessage =
+              "Please verify your email before signing in. Check your inbox for the link.";
+            signOut(auth);
             return;
-        }
+          }
 
-        const auth = getAuth(firebaseApp);
-        await setPersistence(auth, this.rememberMe ? browserLocalPersistence : browserSessionPersistence);
-        setRememberMeCookie(this.rememberMe);
-
-        signInWithEmailAndPassword(auth, this.email, this.password)
-            .then((userCredential) => {
-            const user = userCredential.user;
-
-            if (!user.emailVerified) {
-                this.errorMessage = "Please verify your email before signing in. Check your inbox for the link.";
-                signOut(auth);
-                return;
-            }
-
-            this.errorMessage = "";
-            this.$router.push("/grand");
-            })
-            .catch((error) => {
-            const errorCode = error.code;
-            this.errorMessage = this.mapFirebaseAuthError(errorCode);
-            });
+          this.errorMessage = "";
+          this.$router.push("/grand");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          this.errorMessage = this.mapFirebaseAuthError(errorCode);
+        });
     },
     getLoginFormErrors(emailValue, passwordValue) {
       const errors = [];
@@ -191,7 +220,10 @@ export default {
     async googleSignIn() {
       let provider = new GoogleAuthProvider();
       const auth = getAuth();
-      await setPersistence(auth, this.rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      await setPersistence(
+        auth,
+        this.rememberMe ? browserLocalPersistence : browserSessionPersistence,
+      );
       setRememberMeCookie(this.rememberMe);
       signInWithPopup(auth, provider)
         .then((result) => {
@@ -208,8 +240,8 @@ export default {
           const errorCode = error.code;
           this.errorMessage = this.mapFirebaseAuthError(errorCode);
         });
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -365,12 +397,45 @@ input:focus {
 .remember-me {
   display: flex;
   align-items: center;
-  gap: 8px;;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -4px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d7e2de;
+  border-radius: 10px;
+  background: #f8fbf9;
+  cursor: pointer;
 }
 
-.input[id = "rememberMe"] {
-  width: auto;
-  height: auto;
+.remember-me__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.remember-me__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f3c37;
+  line-height: 1.2;
+}
+
+.remember-me__hint {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #72817a;
+  line-height: 1.2;
+}
+
+.remember-me__checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 #error-message {
@@ -401,12 +466,14 @@ input:focus {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .google-btn:hover {
   background-color: #f8f9fa;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .google-btn svg {
