@@ -4,7 +4,10 @@
       <h1>Grand Page</h1>
       <p>You are logged in successfully.</p>
       <p class="clock" aria-live="polite">Auto logout in: {{ remainingIdleTime }}</p>
-      <router-link to="/login">Back to Login</router-link>
+      <button class="logout-btn" type="button" @click="logout">
+        Log out
+      </button>
+      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
     </section>
 
     <div>
@@ -17,12 +20,31 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { remainingIdleMs } from "./idleSession";
+import { useRouter } from "vue-router";
+import { getAuth, signOut } from "firebase/auth";
+
+const router = useRouter();
 
 const remainingIdleTime = computed(() => {
   return formatDuration(remainingIdleMs.value);
 });
+
+const errorMessage = ref("");
+
+async function logout() {
+  errorMessage.value = "";
+
+  try {
+    const auth = getAuth();
+    await signOut(auth);
+    await router.push("/login");
+  } catch (error) {
+    errorMessage.value = "Failed to log out. Please try again.";
+    console.error("Logout failed:", error);
+  }
+}
 
 function formatDuration(ms) {
   const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
