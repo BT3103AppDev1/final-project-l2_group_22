@@ -7,6 +7,7 @@
         <main class="page-content">
             <p class="desc">Preferences</p>
             <div class="content settings-group">
+                
                 <button class="menu-item" @click="$router.push('/goals')">
                     <div class="menu-left">
                         <div class="menu-icon-circle">
@@ -16,13 +17,11 @@
                                 <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
                             </svg>
                         </div>
-
                         <div class="menu-text">
                             <p class="menu-title">Goals</p>
-                            <p class="menu-subtext">Set and track your spending targets</p>
+                            <p class="menu-subtext">Set spending caps and savings targets</p>
                         </div>
                     </div>
-
                     <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                     </svg>
@@ -36,48 +35,34 @@
                                 <path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
                         </div>
-
                         <div class="menu-text">
-<p class="menu-title">Categories</p>
+                            <p class="menu-title">Categories</p>
                             <p class="menu-subtext">Manage expense and income categories</p>
                         </div>
                     </div>
-
                     <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                     </svg>
                 </button>
 
-                <button class="menu-item" @click="$router.push('/goals')">
-                    <div class="menu-left">
-                        <div class="menu-icon-circle">
-                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle>
-                                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"></circle>
-                                <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
-                            </svg>
-                        </div>
-
-                        <div class="menu-text">
-                            <p class="menu-title">Goals</p>
-                            <p class="menu-subtext">Set spending caps and savings targets</p>
-                        </div>
-                    </div>
-
-                    <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-                    </svg>
-                </button>
-
-                <button class="menu-item">
-                    </button>
             </div>
-            
-            </main>
+        </main>
 
         <BottomNav currentTab="settings" />
     </div>
 </template>
+
+<script>
+// Make sure this path is correct for your project
+import BottomNav from "@/components/BottomNav.vue"
+
+export default {
+    name: "Settings",
+    components: {
+        BottomNav
+    }
+}
+</script>
 
 <style scoped>
 .web-page {
