@@ -6,7 +6,7 @@
         <h1>Goals</h1>
       </div>
       <div class="header-icons">
-        <button class="icon-button" @click="goalStore.fetchGoals()">🔄</button>
+        <button class="icon-button" @click="goalStore.init('user123')">🔄</button>
       </div>
     </header>
 
@@ -24,9 +24,17 @@
             <p class="goal-label">{{ goal.displayName }}</p>
             <h3 class="target-amount">${{ goal.targetAmount.toLocaleString() }}</h3>
           </div>
-          <svg class="menu-arrow" viewBox="0 0 24 24" fill="none">
-            <path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-          </svg>
+          
+          <div class="goal-actions-inline">
+            <button class="delete-icon-btn" @click.stop="confirmDelete(goal)">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+              </svg>
+            </button>
+            <svg class="menu-arrow" viewBox="0 0 24 24" fill="none">
+              <path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
         </div>
 
         <button class="fab" @click="showAddModal = true">+</button>
@@ -61,10 +69,10 @@
           </div>
 
           <div class="modal-actions">
-            <button v-if="isEditing" @click="showDeleteConfirm = true" class="btn-danger-outline" > Delete </button>
+            <button v-if="isEditing" @click="showDeleteConfirm = true" class="btn-danger-outline">Delete</button>
             <button @click="closeModal" class="btn-secondary">Cancel</button>
             <button @click="handleSave" class="btn-primary" :disabled="isProcessing">
-              {{ isProcessing ? 'Saving...' : 'Save Goal' }}
+              {{ isProcessing ? 'Saving...' : 'Save' }}
             </button>
           </div>
         </div>
@@ -72,26 +80,25 @@
 
       <div v-if="showDeleteConfirm" class="modal-overlay">
         <div class="modal-content confirm-modal">
-          <p>Are you sure you want to delete this goal?</p>
+          <h3>Delete Goal?</h3>
+          <p>Are you sure? This cannot be undone.</p>
           <div class="modal-actions">
             <button @click="showDeleteConfirm = false" class="btn-secondary">Cancel</button>
             <button @click="handleDelete" class="btn-danger" :disabled="isProcessing">Confirm Delete</button>
           </div>
         </div>
       </div>
+
       <div v-if="showOverrideConfirm" class="modal-overlay">
-  <div class="modal-content confirm-modal">
-    <h3>Duplicate Goal Found</h3>
-    <p>A goal for <strong>{{ goalForm.type === 'Monthly Category Spending Cap' ? goalForm.category : 'this type' }}</strong> already exists. Do you want to override it?</p>
-    
-    <div class="modal-actions">
-      <button @click="showOverrideConfirm = false" class="btn-secondary">Cancel</button>
-      <button @click="executeSave(duplicateGoalId)" class="btn-primary" :disabled="isProcessing">
-        {{ isProcessing ? 'Updating...' : 'Override' }}
-      </button>
-    </div>
-  </div>
-</div>
+        <div class="modal-content confirm-modal">
+          <h3>Duplicate Goal Found</h3>
+          <p>A goal for <strong>{{ goalForm.type === 'Monthly Category Spending Cap' ? goalForm.category : 'this type' }}</strong> already exists. Override it?</p>
+          <div class="modal-actions">
+            <button @click="showOverrideConfirm = false" class="btn-secondary">Cancel</button>
+            <button @click="executeSave(duplicateGoalId)" class="btn-primary" :disabled="isProcessing">Override</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <BottomNav currentTab="settings" />
@@ -107,7 +114,6 @@ const goalStore = useGoalStore();
 const showOverrideConfirm = ref(false);
 const duplicateGoalId = ref(null);
 
-// UI State
 const showAddModal = ref(false);
 const isEditing = ref(false);
 const showDeleteConfirm = ref(false);
@@ -124,13 +130,18 @@ const goalForm = reactive({
 const categories = ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities'];
 
 onMounted(() => {
-  goalStore.init('user123'); // Ensure this matches your auth logic
+  goalStore.init('user123'); // Remember to link this to your Head of Finance auth logic
 });
 
 const openDetails = (goal) => {
   selectedGoal.value = goal;
   Object.assign(goalForm, goal);
   isEditing.value = true;
+};
+
+const confirmDelete = (goal) => {
+  selectedGoal.value = goal;
+  showDeleteConfirm.value = true;
 };
 
 const validate = () => {
@@ -151,22 +162,17 @@ const validate = () => {
 
 const handleSave = async () => {
   if (!validate()) return;
-  
-  // If we are adding a NEW goal, check for duplicates first
   if (!isEditing.value) {
     const duplicate = goalStore.findDuplicate(goalForm);
     if (duplicate) {
       duplicateGoalId.value = duplicate.id;
       showOverrideConfirm.value = true;
-      return; // Stop here and wait for user choice
+      return;
     }
   }
-
-  // If no duplicate OR if we are editing, proceed normally
   await executeSave();
 };
 
-// Wrap the actual database call in a helper function
 const executeSave = async (id = null) => {
   isProcessing.value = true;
   try {
@@ -188,7 +194,9 @@ const executeSave = async (id = null) => {
 const handleDelete = async () => {
   isProcessing.value = true;
   try {
-    await goalStore.deleteGoal(selectedGoal.value.id);
+    if (selectedGoal.value) {
+      await goalStore.deleteGoal(selectedGoal.value.id);
+    }
     closeModal();
   } finally {
     isProcessing.value = false;
@@ -204,13 +212,11 @@ const closeModal = () => {
   goalForm.targetAmount = null;
   goalForm.category = '';
 };
-
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
 
-/* UI Variables consistent with Transactions page */
 .web-page {
   --bg: #f4f6f5;
   --card: #ffffff;
@@ -228,7 +234,6 @@ const closeModal = () => {
   color: var(--text-900);
 }
 
-/* Requirement 3: Bigger Back Button and Header Styling */
 .page-header {
   padding: 20px;
   border-bottom: 2px solid #dfe6e3;
@@ -246,18 +251,10 @@ const closeModal = () => {
 .back-btn {
   background: none;
   border: none;
-  font-size: 28px; /* Increased size */
+  font-size: 28px;
   cursor: pointer;
   color: var(--text-900);
   padding: 0;
-  display: flex;
-  align-items: center;
-}
-
-.page-header h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
 }
 
 .page-content {
@@ -266,7 +263,6 @@ const closeModal = () => {
   background: var(--bg);
 }
 
-/* Goal Card Styling */
 .goal-card {
   display: flex;
   justify-content: space-between;
@@ -276,19 +272,32 @@ const closeModal = () => {
   border-radius: 16px;
   margin-bottom: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  cursor: pointer;
-  transition: transform 0.2s;
 }
 
-.goal-card:active {
-  transform: scale(0.98);
+.goal-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.delete-icon-btn {
+  background: none;
+  border: none;
+  color: #ff4757;
+  padding: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.delete-icon-btn:hover {
+  opacity: 1;
 }
 
 .goal-label {
   font-size: 13px;
   color: var(--text-700);
   margin: 0 0 4px 0;
-  font-weight: 500;
 }
 
 .target-amount {
@@ -298,14 +307,12 @@ const closeModal = () => {
   color: var(--brand);
 }
 
-/* Requirement 2: Smaller Arrow */
 .menu-arrow {
   width: 16px;
   height: 16px;
   color: #bdc3c7;
 }
 
-/* Requirement 1: FAB with big font */
 .fab {
   position: fixed;
   bottom: 100px;
@@ -316,16 +323,10 @@ const closeModal = () => {
   background: var(--fab-bg);
   color: white;
   border: none;
-  font-size: 32px; /* Bigger Font/Icon */
-  cursor: pointer;
+  font-size: 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
 }
 
-/* Modal Styling */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -343,100 +344,22 @@ const closeModal = () => {
   border-radius: 20px;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: var(--text-700);
-}
-
-.custom-input, .custom-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px;
 }
 
 .modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 12px;
   margin-top: 24px;
 }
 
-.btn-primary {
-  background: var(--brand);
-  color: white;
-  border: none;
-  padding: 14px;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: #f0f0f0;
-  color: var(--text-700);
-  border: none;
-  padding: 14px;
-  border-radius: 12px;
-  font-weight: 600;
-}
-
-.btn-danger {
-  background: #ff4757;
-  color: white;
-  border: none;
-  padding: 14px;
-  border-radius: 12px;
-  font-weight: 600;
-}
-
-.loading-message {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-700);
-}
-/* Add this to your <style scoped> section */
-
-.modal-actions {
-  display: flex; /* Switch to flex for better control with 3 buttons */
-  gap: 12px;
-  margin-top: 24px;
-}
-
-/* Ensure buttons grow equally or fit the space */
 .modal-actions button {
   flex: 1;
 }
 
-.btn-danger-outline {
-  background: transparent;
-  color: #ff4757;
-  border: 1.5px solid #ff4757;
-  padding: 12px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-family: 'Poppins', sans-serif;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+.btn-primary { background: var(--brand); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; }
+.btn-secondary { background: #f0f0f0; color: var(--text-700); border: none; padding: 14px; border-radius: 12px; font-weight: 600; }
+.btn-danger { background: #ff4757; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; }
+.btn-danger-outline { background: transparent; color: #ff4757; border: 2px solid #ff4757; border-radius: 12px; font-weight: 600; }
 
-.btn-danger-outline:hover {
-  background: #fff5f5;
-}
-
-.btn-danger-outline:active {
-  transform: scale(0.95);
-}
+.error-text { color: #ff4757; font-size: 12px; margin-top: 4px; }
 </style>
