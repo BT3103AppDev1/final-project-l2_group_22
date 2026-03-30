@@ -85,7 +85,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useGoalStore } from '../stores/goalStore';
+import { useGoalStore } from '../stores/GoalStore';
 
 const goalStore = useGoalStore();
 
