@@ -61,6 +61,7 @@
           </div>
 
           <div class="modal-actions">
+            <button v-if="isEditing" @click="showDeleteConfirm = true" class="btn-danger-outline" > Delete </button>
             <button @click="closeModal" class="btn-secondary">Cancel</button>
             <button @click="handleSave" class="btn-primary" :disabled="isProcessing">
               {{ isProcessing ? 'Saving...' : 'Save Goal' }}
