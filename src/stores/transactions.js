@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { db, firebaseConfigError } from '@/firebase'
-import { collection, getDocs, query, orderBy } from 'firebase/firestore'
+import { collection, getDocs, query, orderBy, addDoc, Timestamp } from 'firebase/firestore'
+import { calculateTotalIncome, calculateTotalExpenses, calculateNetCashflow } from '@/utils/calculations'
 
 export const useTransactionsStore = defineStore('transactions', {
   state: () => ({
@@ -8,6 +9,45 @@ export const useTransactionsStore = defineStore('transactions', {
     loading: false,
     error: null
   }),
+
+  getters: {
+    /**
+     * Calculate total income from all transactions
+     */
+    totalIncome: (state) => calculateTotalIncome(state.transactions),
+
+    /**
+     * Calculate total expenses from all transactions
+     */
+    totalExpenses: (state) => calculateTotalExpenses(state.transactions),
+
+    /**
+     * Calculate net cashflow (income - expenses)
+     */
+    netCashflow: (state) => calculateNetCashflow(state.transactions),
+
+    /**
+     * Get count of income transactions
+     */
+    incomeCount: (state) => state.transactions.filter(t => t.type === 'income').length,
+
+    /**
+     * Get count of expense transactions
+     */
+    expenseCount: (state) => state.transactions.filter(t => t.type === 'expense').length,
+
+    /**
+     * Get transaction summary object
+     */
+    summary: (state) => ({
+      totalIncome: calculateTotalIncome(state.transactions),
+      totalExpenses: calculateTotalExpenses(state.transactions),
+      netCashflow: calculateNetCashflow(state.transactions),
+      incomeCount: state.transactions.filter(t => t.type === 'income').length,
+      expenseCount: state.transactions.filter(t => t.type === 'expense').length,
+      totalCount: state.transactions.length
+    })
+  },
   actions: {
     async fetchTransactions() {
       if (firebaseConfigError) {
@@ -24,6 +64,49 @@ export const useTransactionsStore = defineStore('transactions', {
         this.error = e.message
       } finally {
         this.loading = false
+      }
+    },
+
+    async addTransaction(payload) {
+      if (firebaseConfigError) {
+        this.error = firebaseConfigError
+        throw new Error(firebaseConfigError)
+      }
+
+      const docData = {
+        type: payload.type,
+        amount: Number(payload.amount),
+        category: payload.category,
+        date: Timestamp.fromDate(payload.date),
+        ...(payload.merchant ? { merchant: payload.merchant } : {}),
+        ...(payload.note ? { note: payload.note } : {})
+      }
+
+      // Add transaction optimistically to store immediately for instant feedback
+      const optimisticTransaction = { id: `_temp_${Date.now()}`, ...docData }
+      this.transactions.unshift(optimisticTransaction)
+
+      try {
+        // Implement 2-second timeout for save operation (NF-01 requirement)
+        const savePromise = addDoc(collection(db, 'transactions'), docData)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Save operation timed out after 2 seconds')), 2000)
+        )
+
+        const ref = await Promise.race([savePromise, timeoutPromise])
+
+        // Replace optimistic transaction with real one
+        const index = this.transactions.findIndex(t => t.id === optimisticTransaction.id)
+        if (index !== -1) {
+          this.transactions[index] = { id: ref.id, ...docData }
+        }
+
+        return { id: ref.id, ...docData }
+      } catch (e) {
+        // Rollback optimistic update on error
+        this.transactions = this.transactions.filter(t => t.id !== optimisticTransaction.id)
+        this.error = e.message
+        throw e
       }
     }
   }

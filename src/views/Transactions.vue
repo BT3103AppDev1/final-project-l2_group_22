@@ -29,13 +29,21 @@
 
         <main class="page-content">
             <div v-if="store.loading" class="loading-message">Loading…</div>
-            <ul v-else-if="filteredTransactions.length > 0" class="transactions-list">
-                <li v-for="transaction in filteredTransactions" :key="transaction.id">
-                    <TransactionItem :transaction="transaction" />
-                </li>
-            </ul>
+            <VirtualScroller
+                v-else-if="filteredTransactions.length > 0"
+                :items="filteredTransactions"
+                :item-size="76"
+                :buffer="5"
+                class="transactions-list"
+            >
+                <template #default="{ item: transaction }">
+                    <div :key="transaction.id" class="transaction-list-item">
+                        <TransactionItem :transaction="transaction" />
+                    </div>
+                </template>
+            </VirtualScroller>
             <EmptyState v-else :activeTab="activeTab" />
-            <button class="fab" @click="$router.push('/add-transaction')">+</button>
+            <button class="fab" @click="$router.push(`/transactions/add?type=${activeTab}`)">+</button>
         </main>
 
         <BottomNav currentTab="transactions" />
@@ -67,6 +75,11 @@ export default {
     },
     mounted() {
         this.store.fetchTransactions()
+        if (this.$route.query.tab === 'income') {
+            this.activeTab = 'income'
+        }
+        // Scroll to top when returning from add transaction
+        window.scrollTo(0, 0)
     },
     setup() {
         const store = useTransactionsStore()
@@ -85,6 +98,10 @@ export default {
     --text-700: #5e6c66;
     --brand: #5e9486;
     --border: #dfe6e3;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 .web-page {
@@ -173,10 +190,13 @@ export default {
     list-style: none;
     padding: 0;
     margin: 0;
+    height: calc(100vh - 320px);
+    min-height: 400px;
 }
 
-.transactions-list li {
+.transaction-list-item {
     margin: 0;
+    padding: 0;
 }
 
 .fab {

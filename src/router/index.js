@@ -72,10 +72,17 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/add-transaction',
+    path: '/transactions/add',
     name: 'AddTransaction',
     component: () => import('@/views/AddTransaction.vue'),
+    props: route => ({ type: route.query.type }),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/add-transaction',
+    redirect: to => {
+      return { path: '/transactions/add', query: to.query }
+    }
   }
 ]
 
