@@ -407,4 +407,36 @@ const closeModal = () => {
   padding: 40px;
   color: var(--text-700);
 }
+/* Add this to your <style scoped> section */
+
+.modal-actions {
+  display: flex; /* Switch to flex for better control with 3 buttons */
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Ensure buttons grow equally or fit the space */
+.modal-actions button {
+  flex: 1;
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: #ff4757;
+  border: 1.5px solid #ff4757;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger-outline:hover {
+  background: #fff5f5;
+}
+
+.btn-danger-outline:active {
+  transform: scale(0.95);
+}
 </style>
