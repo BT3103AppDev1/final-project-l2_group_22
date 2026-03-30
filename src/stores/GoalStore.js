@@ -23,11 +23,15 @@ export const useGoalStore = defineStore('goals', {
           : goal.type
       }));
     },
-    findDuplicate: (state) => (newGoal) => {
-    return state.goals.find(g => {
-      if (newGoal.type === 'Monthly Category Spending Cap') {
-        return g.type === newGoal.type && g.category === newGoal.category;
-      }
+    findDuplicate: (state) => (newGoal, currentId = null) => {
+  return state.goals.find(g => {
+    // 1. Skip the goal we are currently editing (by ID)
+    if (currentId && g.id === currentId) return false;
+
+    // 2. Check for matching type and category
+    if (newGoal.type === 'Monthly Category Spending Cap') {
+      return g.type === newGoal.type && g.category === newGoal.category;
+    }
     return g.type === newGoal.type;
   });
 }
