@@ -162,23 +162,33 @@ const validate = () => {
 
 const handleSave = async () => {
   if (!validate()) return;
-  if (!isEditing.value) {
-    const duplicate = goalStore.findDuplicate(goalForm);
-    if (duplicate) {
-      duplicateGoalId.value = duplicate.id;
-      showOverrideConfirm.value = true;
-      return;
-    }
+
+  // ALWAYS check for duplicates, but pass the current ID to ignore itself
+  const currentId = isEditing.value ? selectedGoal.value.id : null;
+  const duplicate = goalStore.findDuplicate(goalForm, currentId);
+
+  if (duplicate) {
+    duplicateGoalId.value = duplicate.id;
+    showOverrideConfirm.value = true;
+    return;
   }
+
   await executeSave();
 };
 
 const executeSave = async (id = null) => {
   isProcessing.value = true;
   try {
-    const data = { ...goalForm, userId: 'user123' };
-    if (isEditing.value || id) {
-      const targetId = id || selectedGoal.value.id;
+    // Determine which ID to update: 
+    // - 'id' from override modal 
+    // - 'selectedGoal.value.id' from edit modal
+    const targetId = id || (isEditing.value ? selectedGoal.value.id : null);
+    
+    // Clean data for Firestore (remove any local IDs from the form object)
+    const { id: _, ...cleanData } = goalForm;
+    const data = { ...cleanData, userId: 'user123' };
+
+    if (targetId) {
       await goalStore.updateGoal(targetId, data);
     } else {
       await goalStore.addGoal(data);
