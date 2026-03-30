@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import { GoalService } from '../services/GoalService';
 
+
+
 export const useGoalStore = defineStore('goals', {
   state: () => ({
     goals: [],
@@ -21,6 +23,14 @@ export const useGoalStore = defineStore('goals', {
           : goal.type
       }));
     }
+    findDuplicate: (state) => (newGoal) => {
+    return state.goals.find(g => {
+      if (newGoal.type === 'Monthly Category Spending Cap') {
+        return g.type === newGoal.type && g.category === newGoal.category;
+      }
+    return g.type === newGoal.type;
+  });
+}
   },
 
   actions: {
