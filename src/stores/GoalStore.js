@@ -22,7 +22,7 @@ export const useGoalStore = defineStore('goals', {
           ? `${goal.category} Cap` 
           : goal.type
       }));
-    }
+    },
     findDuplicate: (state) => (newGoal) => {
     return state.goals.find(g => {
       if (newGoal.type === 'Monthly Category Spending Cap') {
