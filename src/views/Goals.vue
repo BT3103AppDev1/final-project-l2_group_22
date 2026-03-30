@@ -295,7 +295,7 @@ const closeModal = () => {
   background: rgba(0,0,0,0.4);
   backdrop-filter: blur(2px);
   display: flex;
-  align-items: flex-end; /* Mobile-first slide up feel */
+  align-items: center; 
   justify-content: center;
   z-index: 100;
 }
@@ -303,9 +303,9 @@ const closeModal = () => {
 .modal-content {
   background: white;
   padding: 24px;
-  border-radius: 24px 24px 0 0;
-  width: 100%;
-  max-width: 500px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
 }
 
