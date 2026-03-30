@@ -38,8 +38,29 @@
                         </div>
 
                         <div class="menu-text">
-                            <p class="menu-title">Categories</p>
+<p class="menu-title">Categories</p>
                             <p class="menu-subtext">Manage expense and income categories</p>
+                        </div>
+                    </div>
+
+                    <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </button>
+
+                <button class="menu-item" @click="$router.push('/goals')">
+                    <div class="menu-left">
+                        <div class="menu-icon-circle">
+                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"></circle>
+                                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"></circle>
+                                <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+                            </svg>
+                        </div>
+
+                        <div class="menu-text">
+                            <p class="menu-title">Goals</p>
+                            <p class="menu-subtext">Set spending caps and savings targets</p>
                         </div>
                     </div>
 
