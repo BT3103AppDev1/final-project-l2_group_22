@@ -78,6 +78,19 @@
           </div>
         </div>
       </div>
+      <div v-if="showOverrideConfirm" class="modal-overlay">
+  <div class="modal-content confirm-modal">
+    <h3>Duplicate Goal Found</h3>
+    <p>A goal for <strong>{{ goalForm.type === 'Monthly Category Spending Cap' ? goalForm.category : 'this type' }}</strong> already exists. Do you want to override it?</p>
+    
+    <div class="modal-actions">
+      <button @click="showOverrideConfirm = false" class="btn-secondary">Cancel</button>
+      <button @click="executeSave(duplicateGoalId)" class="btn-primary" :disabled="isProcessing">
+        {{ isProcessing ? 'Updating...' : 'Override' }}
+      </button>
+    </div>
+  </div>
+</div>
     </main>
 
     <BottomNav currentTab="settings" />
@@ -90,6 +103,8 @@ import { useGoalStore } from '../stores/GoalStore';
 import BottomNav from "@/components/BottomNav.vue";
 
 const goalStore = useGoalStore();
+const showOverrideConfirm = ref(false);
+const duplicateGoalId = ref(null);
 
 // UI State
 const showAddModal = ref(false);
@@ -135,17 +150,37 @@ const validate = () => {
 
 const handleSave = async () => {
   if (!validate()) return;
+  
+  // If we are adding a NEW goal, check for duplicates first
+  if (!isEditing.value) {
+    const duplicate = goalStore.findDuplicate(goalForm);
+    if (duplicate) {
+      duplicateGoalId.value = duplicate.id;
+      showOverrideConfirm.value = true;
+      return; // Stop here and wait for user choice
+    }
+  }
+
+  // If no duplicate OR if we are editing, proceed normally
+  await executeSave();
+};
+
+// Wrap the actual database call in a helper function
+const executeSave = async (id = null) => {
   isProcessing.value = true;
   try {
     const data = { ...goalForm, userId: 'user123' };
-    if (isEditing.value) {
-      await goalStore.updateGoal(selectedGoal.value.id, data);
+    if (isEditing.value || id) {
+      const targetId = id || selectedGoal.value.id;
+      await goalStore.updateGoal(targetId, data);
     } else {
       await goalStore.addGoal(data);
     }
     closeModal();
   } finally {
     isProcessing.value = false;
+    showOverrideConfirm.value = false;
+    duplicateGoalId.value = null;
   }
 };
 
@@ -168,6 +203,7 @@ const closeModal = () => {
   goalForm.targetAmount = null;
   goalForm.category = '';
 };
+
 </script>
 
 <style scoped>
