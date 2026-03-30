@@ -66,6 +66,13 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/goals', // Add this entry
+    name: 'Goals',
+    // Lazy load the component (ensure the file exists at this path)
+    component: () => import('@/views/Goals.vue'), 
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: Profile,
