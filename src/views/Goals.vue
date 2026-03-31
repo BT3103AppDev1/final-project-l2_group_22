@@ -106,9 +106,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import BottomNav from "@/components/BottomNav.vue";
-import { onMounted, watch } from 'vue';
 import { useGoalStore } from '../stores/GoalStore';
 import { useAuthStore } from '../stores/AuthStore';
   
