@@ -6,7 +6,7 @@
         <h1>Goals</h1>
       </div>
       <div class="header-icons">
-        <button class="icon-button" @click="goalStore.init('user123')">🔄</button>
+        <button class="icon-button" @click="goalStore.init('authStore.currentUserEmail')">🔄</button>
       </div>
     </header>
 
@@ -133,7 +133,7 @@ const categories = ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities
 
 onMounted(() => {
   if (authStore.currentUserEmail) {
-    goalStore.init(authStore.currentUserEmail);
+    goalStore.init(authStore.currentUserEmail.toLowerCase());
   }
 });
 
@@ -198,7 +198,7 @@ const executeSave = async (id = null) => {
     
     // Clean data for Firestore (remove any local IDs from the form object)
     const { id: _, ...cleanData } = goalForm;
-    const data = { ...cleanData, userId: authStore.currentUserEmail };
+    const data = { ...cleanData, userId: authStore.currentUserEmail.toLowerCase() };
 
     if (targetId) {
       await goalStore.updateGoal(targetId, data);
