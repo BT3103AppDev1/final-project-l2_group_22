@@ -115,6 +115,19 @@ export default {
 
         this.errorMessage = this.mapFirebaseAuthError(error?.code, error?.message);
       }
+      const auth = getAuth();
+      const user = auth.currentUser;
+      const oldEmail = user.email; // Store the old email before change
+    
+      try {
+          await verifyBeforeUpdateEmail(user, normalizedNewEmail, actionCodeSettings);
+        
+        // IMPORTANT: Explain the data impact to the user
+          this.successMessage = "Verification sent! Note: Your goals are currently linked to " + 
+                              oldEmail + ". Once you verify, you will need to re-link your data.";
+    } catch (error) {
+        // ... error handling ...
+    }
     },
     getFormErrors(emailValue) {
       const errors = [];
