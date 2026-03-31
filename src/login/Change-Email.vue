@@ -115,7 +115,8 @@ export default {
 
         this.errorMessage = this.mapFirebaseAuthError(error?.code, error?.message);
       }
-      const auth = getAuth();
+
+      
       const user = auth.currentUser;
       const oldEmail = user.email; // Store the old email before change
     
