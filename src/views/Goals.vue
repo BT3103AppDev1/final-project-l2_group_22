@@ -107,10 +107,13 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useGoalStore } from '../stores/GoalStore';
 import BottomNav from "@/components/BottomNav.vue";
-
+import { onMounted, watch } from 'vue';
+import { useGoalStore } from '../stores/GoalStore';
+import { useAuthStore } from '../stores/AuthStore';
+  
 const goalStore = useGoalStore();
+const authStore = useAuthStore();
 const showOverrideConfirm = ref(false);
 const duplicateGoalId = ref(null);
 
@@ -130,7 +133,17 @@ const goalForm = reactive({
 const categories = ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities'];
 
 onMounted(() => {
-  goalStore.init('user123'); // Remember to link this to your Head of Finance auth logic
+  if (authStore.currentUserEmail) {
+    goalStore.init(authStore.currentUserEmail);
+  }
+});
+
+watch(() => authStore.currentUserEmail, (newEmail) => {
+  if (newEmail) {
+    goalStore.init(newEmail);
+  } else {
+    goalStore.cleanup();
+  }
 });
 
 const openDetails = (goal) => {
@@ -186,7 +199,7 @@ const executeSave = async (id = null) => {
     
     // Clean data for Firestore (remove any local IDs from the form object)
     const { id: _, ...cleanData } = goalForm;
-    const data = { ...cleanData, userId: 'user123' };
+    const data = { ...cleanData, userId: authStore.currentUserEmail };
 
     if (targetId) {
       await goalStore.updateGoal(targetId, data);
