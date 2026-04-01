@@ -126,26 +126,21 @@ function getCurrentUser() {
   })
 }
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const user = await getCurrentUser()
   const authPages = ['/login', '/register', '/reset-password']
 
   if (to.path === '/') {
-    next(user ? '/dashboard' : '/login')
-    return
+    return user ? '/dashboard' : '/login'
   }
 
   if (to.meta.requiresAuth && !user) {
-    next('/login')
-    return
+    return '/login'
   }
 
   if (authPages.includes(to.path) && user) {
-    next('/dashboard')
-    return
+    return '/dashboard'
   }
-
-  next()
 })
 
 export default router
