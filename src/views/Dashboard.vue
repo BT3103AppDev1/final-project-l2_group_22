@@ -5,6 +5,20 @@
     </header>
 
     <main class="page-content">
+      <!-- Period Selector -->
+      <div class="period-selector">
+        <button
+          class="period-btn"
+          :class="{ active: selectedPeriod === 'this-month' }"
+          @click="selectedPeriod = 'this-month'"
+        >This month</button>
+        <button
+          class="period-btn"
+          :class="{ active: selectedPeriod === 'last-month' }"
+          @click="selectedPeriod = 'last-month'"
+        >Last month</button>
+      </div>
+
       <!-- Loading State -->
       <div v-if="store.loading" class="loading-message">Loading…</div>
 
@@ -15,8 +29,8 @@
           <!-- Net Cashflow Card -->
           <div class="metric-card cashflow-card">
             <div class="metric-label">Net Cashflow</div>
-            <div class="metric-value" :class="{ negative: store.netCashflow < 0 }">
-              {{ formatCurrency(store.netCashflow) }}
+            <div class="metric-value" :class="{ negative: periodNetCashflow < 0 }">
+              {{ formatCurrency(periodNetCashflow) }}
             </div>
             <div class="metric-subtext">Income − Expenses</div>
           </div>
@@ -25,18 +39,59 @@
           <div class="metric-card income-card">
             <div class="metric-label">Total Income</div>
             <div class="metric-value income">
-              +${{ formatNumber(store.totalIncome) }}
+              +${{ formatNumber(periodIncome) }}
             </div>
-            <div class="metric-subtext">{{ store.incomeCount }} transaction(s)</div>
+            <div class="metric-subtext">{{ periodIncomeCount }} transaction(s)</div>
           </div>
 
           <!-- Total Expenses Card -->
           <div class="metric-card expense-card">
             <div class="metric-label">Total Expenses</div>
             <div class="metric-value expense">
-              −${{ formatNumber(store.totalExpenses) }}
+              −${{ formatNumber(periodExpenses) }}
             </div>
-            <div class="metric-subtext">{{ store.expenseCount }} transaction(s)</div>
+            <div class="metric-subtext">{{ periodExpenseCount }} transaction(s)</div>
+          </div>
+        </div>
+
+        <!-- Goals Section -->
+        <div class="goals-section">
+          <div class="section-header">
+            <h2>Goals</h2>
+            <button class="manage-goals-btn" @click="$router.push('/goals')">Manage Goals</button>
+          </div>
+
+          <div v-if="goalStore.loading" class="loading-message">Loading goals…</div>
+
+          <div v-else-if="goalStore.goals.length === 0" class="goals-empty">
+            No goals set yet.
+            <button class="manage-goals-btn" @click="$router.push('/goals')">Add a Goal</button>
+          </div>
+
+          <div v-else class="goal-progress-list">
+            <div
+              v-for="gp in goalProgress"
+              :key="gp.goal.id"
+              class="goal-progress-card"
+            >
+              <div class="goal-progress-header">
+                <span class="goal-name">{{ gp.goal.displayName }}</span>
+                <span class="goal-status-badge" :class="statusClass(gp.status)">{{ gp.status }}</span>
+              </div>
+
+              <div class="goal-progress-bar-wrap">
+                <div
+                  class="goal-progress-bar"
+                  :class="statusClass(gp.status)"
+                  :style="{ width: barWidth(gp.actual, gp.goal.targetAmount) }"
+                ></div>
+              </div>
+
+              <div class="goal-progress-amounts">
+                <span class="goal-actual">Actual: ${{ formatNumber(gp.actual) }}</span>
+                <span class="goal-target">Target: ${{ formatNumber(gp.goal.targetAmount) }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -85,6 +140,7 @@
 import BottomNav from "@/components/BottomNav.vue"
 import { useTransactionsStore } from "@/stores/transactions"
 import { useAuthStore } from "@/stores/AuthStore"
+import { useGoalStore } from "@/stores/GoalStore"
 
 export default {
   name: "Dashboard",
@@ -95,17 +151,75 @@ export default {
   setup() {
     const store = useTransactionsStore()
     const authStore = useAuthStore()
-    return { store, authStore }
+    const goalStore = useGoalStore()
+    return { store, authStore, goalStore }
+  },
+
+  data() {
+    return {
+      selectedPeriod: 'this-month'
+    }
   },
 
   computed: {
     recentTransactions() {
       return this.store.transactions.slice(0, 5)
+    },
+
+    periodDates() {
+      const now = new Date()
+      if (this.selectedPeriod === 'this-month') {
+        return { year: now.getFullYear(), month: now.getMonth() }
+      }
+      const d = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      return { year: d.getFullYear(), month: d.getMonth() }
+    },
+
+    periodTransactions() {
+      const { year, month } = this.periodDates
+      return this.store.transactions.filter(t => {
+        const d = this.getTransactionDate(t)
+        if (!d) return false
+        return d.getFullYear() === year && d.getMonth() === month
+      })
+    },
+
+    periodIncome() {
+      return this.periodTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+    },
+
+    periodExpenses() {
+      return this.periodTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+    },
+
+    periodNetCashflow() {
+      return this.periodIncome - this.periodExpenses
+    },
+
+    periodIncomeCount() {
+      return this.periodTransactions.filter(t => t.type === 'income').length
+    },
+
+    periodExpenseCount() {
+      return this.periodTransactions.filter(t => t.type === 'expense').length
+    },
+
+    goalProgress() {
+      return this.goalStore.formattedGoals.map(goal => {
+        const actual = this.goalStore.goalActual(goal, this.periodTransactions)
+        const status = this.goalStore.goalStatus(actual, goal.targetAmount)
+        return { goal, actual, status }
+      })
     }
   },
 
   mounted() {
     this.store.fetchTransactions(this.authStore.currentUserId)
+    this.goalStore.init(this.authStore.currentUserId)
   },
 
   methods: {
@@ -130,6 +244,27 @@ export default {
       }
       if (!(date instanceof Date)) return ''
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    },
+
+    getTransactionDate(t) {
+      let d = t.date
+      if (!d) return null
+      if (d.toDate) return d.toDate()
+      if (typeof d === 'string') return new Date(d)
+      if (d instanceof Date) return d
+      return null
+    },
+
+    statusClass(status) {
+      if (status === 'Exceeded') return 'status-exceeded'
+      if (status === 'At risk') return 'status-at-risk'
+      return 'status-on-track'
+    },
+
+    barWidth(actual, target) {
+      if (!target || target <= 0) return '0%'
+      const pct = Math.min((actual / target) * 100, 100)
+      return `${pct.toFixed(1)}%`
     }
   }
 }
@@ -411,5 +546,158 @@ export default {
 
 .recent-amount.income {
   color: var(--income);
+}
+
+/* Period Selector */
+.period-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.period-btn {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text-700);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+}
+
+.period-btn.active {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+}
+
+.period-btn:hover:not(.active) {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* Goals Section */
+.goals-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goals-empty {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-700);
+  font-size: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.manage-goals-btn {
+  padding: 8px 18px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.manage-goals-btn:hover {
+  background: #4d7d70;
+}
+
+.goal-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goal-progress-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goal-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.goal-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-900);
+}
+
+.goal-status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.goal-status-badge.status-on-track {
+  background: #e6f4ed;
+  color: var(--income);
+}
+
+.goal-status-badge.status-at-risk {
+  background: #fff3e0;
+  color: #e67e00;
+}
+
+.goal-status-badge.status-exceeded {
+  background: #fde8e8;
+  color: var(--expense);
+}
+
+.goal-progress-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.goal-progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.goal-progress-bar.status-on-track {
+  background: var(--income);
+}
+
+.goal-progress-bar.status-at-risk {
+  background: #e67e00;
+}
+
+.goal-progress-bar.status-exceeded {
+  background: var(--expense);
+}
+
+.goal-progress-amounts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-700);
 }
 </style>
