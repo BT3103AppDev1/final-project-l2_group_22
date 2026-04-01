@@ -195,6 +195,7 @@
 <script>
 import BottomNav from "@/components/BottomNav.vue"
 import { useTransactionsStore } from "@/stores/transactions"
+import { useAuthStore } from "@/stores/AuthStore"
 
 const EXPENSE_CATEGORIES = [
   'Groceries', 'Dining', 'Transportation', 'Shopping',
@@ -479,6 +480,7 @@ export default {
           amount: this.amount,
           category: this.category,
           date: this.dateObj,
+          userId: this.authStore.currentUserId,
           merchant: this.merchant.trim(),
           note: this.notes.trim()
         })
@@ -496,7 +498,8 @@ export default {
 
   setup() {
     const store = useTransactionsStore()
-    return { store }
+    const authStore = useAuthStore()
+    return { store, authStore }
   }
 }
 </script>

@@ -6,7 +6,7 @@
         <h1>Goals</h1>
       </div>
       <div class="header-icons">
-        <button class="icon-button" @click="goalStore.init('authStore.currentUserEmail')">🔄</button>
+        <button class="icon-button" @click="goalStore.init(authStore.currentUserId)">🔄</button>
       </div>
     </header>
 
@@ -132,14 +132,14 @@ const goalForm = reactive({
 const categories = ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities'];
 
 onMounted(() => {
-  if (authStore.currentUserEmail) {
-    goalStore.init(authStore.currentUserEmail.toLowerCase());
+  if (authStore.currentUserId) {
+    goalStore.init(authStore.currentUserId);
   }
 });
 
-watch(() => authStore.currentUserEmail, (newEmail) => {
-  if (newEmail) {
-    goalStore.init(newEmail);
+watch(() => authStore.currentUserId, (newUserId) => {
+  if (newUserId) {
+    goalStore.init(newUserId);
   } else {
     goalStore.cleanup();
   }
@@ -198,7 +198,7 @@ const executeSave = async (id = null) => {
     
     // Clean data for Firestore (remove any local IDs from the form object)
     const { id: _, ...cleanData } = goalForm;
-    const data = { ...cleanData, userId: authStore.currentUserEmail.toLowerCase() };
+    const data = { ...cleanData, userId: authStore.currentUserId };
 
     if (targetId) {
       await goalStore.updateGoal(targetId, data);

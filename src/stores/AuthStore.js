@@ -8,7 +8,7 @@ export const useAuthStore = defineStore('auth', {
     isInitialised: false
   }),
   getters: {
-    // This is the key for your "userId" field in Firestore
+    currentUserId: (state) => state.user?.uid || null,
     currentUserEmail: (state) => state.user?.email || null,
     isAuthenticated: (state) => !!state.user
   },
