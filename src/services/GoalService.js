@@ -24,12 +24,16 @@ export const GoalService = {
       where('userId', '==', userId)
     );
 
+    console.log("[GoalService] Starting Firestore listener for userId:", userId);
     return onSnapshot(q, (snapshot) => {
       const goals = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      console.log("[GoalService] Listener received", goals.length, "goals for userId:", userId);
       callback(goals);
+    }, (error) => {
+      console.error("[GoalService] Firestore listener error:", error);
     });
   },
 

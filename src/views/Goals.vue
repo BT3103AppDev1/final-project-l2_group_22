@@ -200,10 +200,13 @@ const executeSave = async (id = null) => {
     const { id: _, ...cleanData } = goalForm;
     const data = { ...cleanData, userId: authStore.currentUserId };
 
+    console.log("[Goals] Saving goal with userId:", authStore.currentUserId, "data:", data);
     if (targetId) {
       await goalStore.updateGoal(targetId, data);
     } else {
       await goalStore.addGoal(data);
+      console.log("[Goals] Goal added. Reinitializing listener for userId:", authStore.currentUserId);
+      await goalStore.init(authStore.currentUserId);
     }
     closeModal();
   } finally {
