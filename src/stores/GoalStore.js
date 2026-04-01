@@ -34,7 +34,37 @@ export const useGoalStore = defineStore('goals', {
     }
     return g.type === newGoal.type;
   });
-}
+},
+
+    /**
+     * Computes the actual spending for a goal given an array of transactions.
+     * For 'Monthly Total Spending Cap': sums all expense transactions.
+     * For 'Monthly Category Spending Cap': sums expense transactions for that category.
+     */
+    goalActual: (state) => (goal, transactions) => {
+      if (goal.type === 'Monthly Total Spending Cap') {
+        return transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+      } else if (goal.type === 'Monthly Category Spending Cap') {
+        return transactions
+          .filter(t => t.type === 'expense' && t.category === goal.category)
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+      }
+      return 0;
+    },
+
+    /**
+     * Computes the status of a goal based on actual vs target spending.
+     * 'Exceeded' if actual >= target,
+     * 'At risk' if actual >= target * 0.8,
+     * 'On track' otherwise.
+     */
+    goalStatus: (state) => (actual, target) => {
+      if (actual >= target) return 'Exceeded';
+      if (actual >= target * 0.8) return 'At risk';
+      return 'On track';
+    }
   },
 
   actions: {
