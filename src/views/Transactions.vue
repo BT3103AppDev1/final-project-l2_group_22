@@ -29,19 +29,11 @@
 
         <main class="page-content">
             <div v-if="store.loading" class="loading-message">Loading…</div>
-            <VirtualScroller
-                v-else-if="filteredTransactions.length > 0"
-                :items="filteredTransactions"
-                :item-size="76"
-                :buffer="5"
-                class="transactions-list"
-            >
-                <template #default="{ item: transaction }">
-                    <div :key="transaction.id" class="transaction-list-item">
-                        <TransactionItem :transaction="transaction" />
-                    </div>
-                </template>
-            </VirtualScroller>
+            <ul v-else-if="filteredTransactions.length > 0" class="transactions-list">
+                <li v-for="transaction in filteredTransactions" :key="transaction.id" class="transaction-list-item">
+                    <TransactionItem :transaction="transaction" />
+                </li>
+            </ul>
             <EmptyState v-else :activeTab="activeTab" />
             <button class="fab" @click="$router.push(`/transactions/add?type=${activeTab}`)">+</button>
         </main>
@@ -55,7 +47,6 @@ import BottomNav from "@/components/BottomNav.vue"
 import TransactionItem from "@/components/TransactionItem.vue"
 import EmptyState from "@/components/EmptyState.vue"
 import { useTransactionsStore } from "@/stores/transactions"
-import { useAuthStore } from "@/stores/AuthStore"
 
 export default {
     name: "Transactions",
@@ -75,7 +66,7 @@ export default {
         }
     },
     mounted() {
-        this.store.fetchTransactions(this.authStore.currentUserId)
+        this.store.fetchTransactions()
         if (this.$route.query.tab === 'income') {
             this.activeTab = 'income'
         }
@@ -84,8 +75,7 @@ export default {
     },
     setup() {
         const store = useTransactionsStore()
-        const authStore = useAuthStore()
-        return { store, authStore }
+        return { store }
     }
 }
 </script>
