@@ -41,13 +41,12 @@ export const useGoalStore = defineStore('goals', {
     /**
      * Starts the real-time listener for goals.
      */
-    async init(email) {
-      if (!email) return;
-      const lcEmail = email.toLowerCase();
+    async init(userId) {
+      if (!userId) return;
       if (this.stopReading) this.stopReading();
 
       this.loading = true;
-      this.stopReading = GoalService.readingGoals(lcEmail, (data) => {
+      this.stopReading = GoalService.readingGoals(userId, (data) => {
         this.goals = data;
         this.loading = false;
       });

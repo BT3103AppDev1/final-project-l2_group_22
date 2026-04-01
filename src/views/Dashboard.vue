@@ -84,6 +84,7 @@
 <script>
 import BottomNav from "@/components/BottomNav.vue"
 import { useTransactionsStore } from "@/stores/transactions"
+import { useAuthStore } from "@/stores/AuthStore"
 
 export default {
   name: "Dashboard",
@@ -93,7 +94,8 @@ export default {
 
   setup() {
     const store = useTransactionsStore()
-    return { store }
+    const authStore = useAuthStore()
+    return { store, authStore }
   },
 
   computed: {
@@ -103,7 +105,7 @@ export default {
   },
 
   mounted() {
-    this.store.fetchTransactions()
+    this.store.fetchTransactions(this.authStore.currentUserId)
   },
 
   methods: {

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { db, firebaseConfigError } from '@/firebase'
-import { collection, getDocs, query, orderBy, addDoc, Timestamp } from 'firebase/firestore'
+import { collection, getDocs, query, orderBy, where, addDoc, Timestamp } from 'firebase/firestore'
 import { calculateTotalIncome, calculateTotalExpenses, calculateNetCashflow } from '@/utils/calculations'
 
 export const useTransactionsStore = defineStore('transactions', {
@@ -49,15 +49,19 @@ export const useTransactionsStore = defineStore('transactions', {
     })
   },
   actions: {
-    async fetchTransactions() {
+    async fetchTransactions(userId) {
       if (firebaseConfigError) {
         this.error = firebaseConfigError
+        return
+      }
+      if (!userId) {
+        this.transactions = []
         return
       }
       this.loading = true
       this.error = null
       try {
-        const q = query(collection(db, 'transactions'), orderBy('date', 'desc'))
+        const q = query(collection(db, 'transactions'), where('userId', '==', userId), orderBy('date', 'desc'))
         const snapshot = await getDocs(q)
         this.transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       } catch (e) {
@@ -78,6 +82,7 @@ export const useTransactionsStore = defineStore('transactions', {
         amount: Number(payload.amount),
         category: payload.category,
         date: Timestamp.fromDate(payload.date),
+        ...(payload.userId ? { userId: payload.userId } : {}),
         ...(payload.merchant ? { merchant: payload.merchant } : {}),
         ...(payload.note ? { note: payload.note } : {})
       }
