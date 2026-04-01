@@ -1,5 +1,5 @@
 <template>
-  <div class="transaction-card">
+  <div class="transaction-card" @click="$router.push(`/transactions/${transaction.id}`)">
     <div class="card-left">
       <div class="icon-circle" :class="amountClass">
         <span class="icon-arrow">{{ amountClass === 'expense' ? '▼' : '▲' }}</span>
@@ -60,6 +60,17 @@ export default {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.transaction-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.transaction-card:active {
+  transform: translateY(0);
 }
 
 .card-left {

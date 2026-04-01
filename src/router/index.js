@@ -7,6 +7,8 @@ import ResetPassword from '@/login/Reset-Password.vue'
 import ChangeEmail from '@/login/Change-Email.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import Transactions from '@/views/Transactions.vue'
+import TransactionDetails from '@/views/TransactionDetails.vue'
+import EditTransaction from '@/views/EditTransaction.vue'
 import Insights from '@/views/Insights.vue'
 import Settings from '@/views/Settings.vue'
 import Profile from '@/views/Profile.vue'
@@ -51,6 +53,22 @@ const routes = [
     path: '/transactions',
     name: 'Transactions',
     component: Transactions,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/transactions/add',
+    redirect: to => ({ path: '/add-transaction', query: to.query })
+  },
+  {
+    path: '/transactions/:id',
+    name: 'TransactionDetails',
+    component: TransactionDetails,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/transactions/:id/edit',
+    name: 'EditTransaction',
+    component: EditTransaction,
     meta: { requiresAuth: true }
   },
   {
