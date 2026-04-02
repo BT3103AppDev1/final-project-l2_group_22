@@ -106,6 +106,7 @@
 import {
 	createUserWithEmailAndPassword,
 	getAuth,
+	signOut,
 	updateProfile,
 	validatePassword,
 	sendEmailVerification,
@@ -173,6 +174,7 @@ export default {
 				});
 
 				await sendEmailVerification(user);
+				await signOut(auth);
 
 				alert("Account created! Please check your email to verify your account before logging in.");
 				this.$router.push("/login");
