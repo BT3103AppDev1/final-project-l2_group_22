@@ -128,19 +128,20 @@ function getCurrentUser() {
 
 router.beforeEach(async (to, from, next) => {
   const user = await getCurrentUser()
+  const isVerifiedUser = Boolean(user?.emailVerified)
   const authPages = ['/login', '/register', '/reset-password']
 
   if (to.path === '/') {
-    next(user ? '/dashboard' : '/login')
+    next(isVerifiedUser ? '/dashboard' : '/login')
     return
   }
 
-  if (to.meta.requiresAuth && !user) {
+  if (to.meta.requiresAuth && !isVerifiedUser) {
     next('/login')
     return
   }
 
-  if (authPages.includes(to.path) && user) {
+  if (authPages.includes(to.path) && isVerifiedUser) {
     next('/dashboard')
     return
   }
