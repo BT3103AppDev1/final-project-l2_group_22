@@ -36,7 +36,7 @@
           </div>
 
           <!-- Total Income Card -->
-          <div class="metric-card income-card">
+          <div class="metric-card income-card clickable" @click="$router.push('/transactions?tab=income')">
             <div class="metric-label">Total Income</div>
             <div class="metric-value income">
               +${{ formatNumber(periodIncome) }}
@@ -45,7 +45,7 @@
           </div>
 
           <!-- Total Expenses Card -->
-          <div class="metric-card expense-card">
+          <div class="metric-card expense-card clickable" @click="$router.push('/transactions?tab=expense')">
             <div class="metric-label">Total Expenses</div>
             <div class="metric-value expense">
               −${{ formatNumber(periodExpenses) }}
@@ -346,6 +346,16 @@ export default {
 .metric-card.income-card {
   border-left-color: var(--income);
   background: linear-gradient(135deg, rgba(45, 138, 79, 0.05), rgba(45, 138, 79, 0.02));
+}
+
+.metric-card.clickable {
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.metric-card.clickable:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
 .metric-card.expense-card {
