@@ -126,7 +126,6 @@
 <script>
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase";
-import { ED } from "@/services/editDelete";
 import { useTransactionsStore } from "@/stores/transactions";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useCategoriesStore } from "@/stores/categories";
@@ -226,7 +225,7 @@ export default {
           note: this.form.note || "",
         };
 
-        await ED.updateTransaction(txnId, updatedData);
+        await this.store.updateTransaction(txnId, updatedData);
         this.$router.push(`/transactions/${txnId}`);
       } catch (err) {
         console.error("Error updating transaction:", err);

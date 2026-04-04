@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { db, firebaseConfigError } from '@/firebase'
-import { collection, getDocs, query, orderBy, where, addDoc, Timestamp } from 'firebase/firestore'
+import { collection, getDocs, query, orderBy, where, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore'
 import { calculateTotalIncome, calculateTotalExpenses, calculateNetCashflow } from '@/utils/calculations'
 
 export const useTransactionsStore = defineStore('transactions', {
@@ -110,6 +110,64 @@ export const useTransactionsStore = defineStore('transactions', {
       } catch (e) {
         // Rollback optimistic update on error
         this.transactions = this.transactions.filter(t => t.id !== optimisticTransaction.id)
+        this.error = e.message
+        throw e
+      }
+    },
+
+    async updateTransaction(id, updatedData) {
+      if (firebaseConfigError) {
+        this.error = firebaseConfigError
+        throw new Error(firebaseConfigError)
+      }
+
+      // Optimistic update: replace transaction in store immediately
+      const index = this.transactions.findIndex(t => t.id === id)
+      const original = index !== -1 ? this.transactions[index] : null
+      if (index !== -1) {
+        this.transactions[index] = { id, ...updatedData }
+      }
+
+      try {
+        const updatePromise = updateDoc(doc(db, 'transactions', id), updatedData)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Update operation timed out after 2 seconds')), 2000)
+        )
+        await Promise.race([updatePromise, timeoutPromise])
+      } catch (e) {
+        // Rollback optimistic update on error
+        if (index !== -1 && original) {
+          this.transactions[index] = original
+        }
+        this.error = e.message
+        throw e
+      }
+    },
+
+    async deleteTransaction(id) {
+      if (firebaseConfigError) {
+        this.error = firebaseConfigError
+        throw new Error(firebaseConfigError)
+      }
+
+      // Optimistic removal: remove transaction from store immediately
+      const index = this.transactions.findIndex(t => t.id === id)
+      const original = index !== -1 ? this.transactions[index] : null
+      if (index !== -1) {
+        this.transactions.splice(index, 1)
+      }
+
+      try {
+        const deletePromise = deleteDoc(doc(db, 'transactions', id))
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Delete operation timed out after 2 seconds')), 2000)
+        )
+        await Promise.race([deletePromise, timeoutPromise])
+      } catch (e) {
+        // Rollback optimistic removal on error
+        if (index !== -1 && original) {
+          this.transactions.splice(index, 0, original)
+        }
         this.error = e.message
         throw e
       }
