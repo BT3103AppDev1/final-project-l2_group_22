@@ -112,8 +112,8 @@
 
 <script>
 import { doc, getDoc } from 'firebase/firestore'
-import { db, auth } from '@/firebase'
-import { ED } from '@/services/editDelete'
+import { db } from '@/firebase'
+import { useTransactionsStore } from '@/stores/transactions'
 
 export default {
   name: 'TransactionDetails',
@@ -181,7 +181,7 @@ export default {
     async deleteTransaction() {
       this.deleting = true
       try {
-        await ED.deleteTransaction(this.$route.params.id)
+        await this.store.deleteTransaction(this.$route.params.id)
         this.$router.push('/transactions')
       } catch (err) {
         console.error('Error deleting transaction:', err)
@@ -190,6 +190,10 @@ export default {
         this.deleting = false
       }
     }
+  },
+  setup() {
+    const store = useTransactionsStore()
+    return { store }
   }
 }
 </script>
