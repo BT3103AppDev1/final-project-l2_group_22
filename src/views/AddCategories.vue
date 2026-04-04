@@ -4,12 +4,12 @@
       <button class="back-button" @click="goBack">
         <span class="back-arrow">&#8592;</span>
       </button>
-      <h1>Add Transaction</h1>
+      <h1>Add Category</h1>
       <div class="header-spacer"></div>
     </header>
 
     <main class="page-content">
-      <form class="transaction-form" @submit.prevent="handleSave">
+      <form class="category-form" @submit.prevent="handleSave">
         <!-- Type Selector -->
         <div class="form-group">
           <label class="field-label">Type</label>
@@ -33,170 +33,28 @@
           </div>
         </div>
 
-        <!-- Amount -->
-        <div class="form-group">
-          <label for="amount" class="field-label"
-            >Amount <span class="required">*</span></label
-          >
-          <div class="amount-input-wrapper">
-            <span class="currency-symbol">$</span>
-            <input
-              id="amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="0.00"
-              :value="amount"
-              class="field-input amount-input"
-              :class="{ 'input-error': errors.amount }"
-              @input="handleAmountChange($event.target.value)"
-            />
-          </div>
-          <span v-if="errors.amount" class="error-text">{{
-            errors.amount
-          }}</span>
-        </div>
-
         <!-- Category -->
         <div class="form-group">
-          <label for="category" class="field-label"
-            >Category <span class="required">*</span></label
+          <label for="category" class="field-label">
+            Category Name <span class="required">*</span></label
           >
-          <select
+          <input
             id="category"
+            type="text"
             :value="category"
             class="field-input"
             :class="{ 'input-error': errors.category }"
             @change="handleCategoryChange($event.target.value)"
-          >
-            <option value="">Select a category</option>
-            <option v-for="opt in categoryOptions" :key="opt" :value="opt">
-              {{ opt }}
-            </option>
-          </select>
+          />
           <span v-if="errors.category" class="error-text">{{
             errors.category
           }}</span>
         </div>
 
-        <!-- Date -->
+        <!-- Category Description Message -->
         <div class="form-group">
-          <label class="field-label"
-            >Date <span class="required">*</span></label
-          >
-          <div class="date-field-wrapper">
-            <div class="date-input-group" :class="{ 'has-error': errors.date }">
-              <input
-                v-model="dateInput"
-                type="text"
-                placeholder="dd/mm/yyyy"
-                class="date-input"
-                :class="{ 'input-error': errors.date }"
-                @change="handleDateInputChange"
-                @input="handleDateInputChange"
-              />
-              <button
-                type="button"
-                class="calendar-icon-button"
-                @click="toggleCalendar"
-                :disabled="isLoading"
-                title="Open calendar"
-              >
-                📅
-              </button>
-            </div>
-
-            <!-- Calendar Popup -->
-            <div v-if="showCalendar" class="calendar-popup">
-              <div class="calendar-header">
-                <button type="button" class="month-nav prev" @click="prevMonth">
-                  ◀
-                </button>
-                <div class="month-title">{{ monthYear }}</div>
-                <button type="button" class="month-nav next" @click="nextMonth">
-                  ▶
-                </button>
-              </div>
-
-              <div class="calendar-weekdays">
-                <div class="weekday">S</div>
-                <div class="weekday">M</div>
-                <div class="weekday">T</div>
-                <div class="weekday">W</div>
-                <div class="weekday">T</div>
-                <div class="weekday">F</div>
-                <div class="weekday">S</div>
-              </div>
-
-              <div class="calendar-days">
-                <button
-                  v-for="day in calendarDays"
-                  :key="`${day.date}-${day.isCurrentMonth}`"
-                  type="button"
-                  class="calendar-day"
-                  :class="{
-                    'is-selected': day.isSelected,
-                    'is-today': day.isToday,
-                    'is-other-month': !day.isCurrentMonth,
-                  }"
-                  :disabled="!day.isCurrentMonth"
-                  @click="selectDate(day.date)"
-                >
-                  {{ day.date.getDate() }}
-                </button>
-              </div>
-
-              <div class="calendar-footer">
-                <button
-                  type="button"
-                  class="footer-button clear"
-                  @click="clearDate"
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  class="footer-button today"
-                  @click="selectToday"
-                >
-                  Today
-                </button>
-              </div>
-            </div>
-          </div>
-          <!-- end date-field-wrapper -->
-
-          <span v-if="errors.date" class="error-text">{{ errors.date }}</span>
-        </div>
-
-        <!-- Merchant (optional) -->
-        <div class="form-group">
-          <label for="merchant" class="field-label">
-            Merchant <span class="optional">(optional)</span>
-          </label>
-          <input
-            id="merchant"
-            type="text"
-            placeholder="e.g., Whole Foods, Tech Corp"
-            :value="merchant"
-            class="field-input"
-            @input="handleMerchantChange($event.target.value)"
-          />
-        </div>
-
-        <!-- Notes (optional) -->
-        <div class="form-group">
-          <label for="notes" class="field-label">
-            Notes <span class="optional">(optional)</span>
-          </label>
-          <textarea
-            id="notes"
-            rows="3"
-            placeholder="Add any additional details..."
-            :value="notes"
-            class="field-input notes-input"
-            @input="handleNotesChange($event.target.value)"
-          ></textarea>
+          <p for="description" class="field-label">About Categories</p>
+          <div class="categorydescription-box">{{ categoryDescription }}</div>
         </div>
 
         <!-- Error message -->
@@ -207,7 +65,7 @@
           <button type="submit" class="save-button" :disabled="isLoading">
             <span v-if="isLoading" class="spinner"></span>
             <span class="button-text">{{
-              isLoading ? "Saving..." : "Save Transaction"
+              isLoading ? "Saving..." : "Save Category"
             }}</span>
           </button>
           <button
@@ -222,111 +80,46 @@
       </form>
     </main>
 
-    <BottomNav currentTab="transactions" />
+    <BottomNav currentTab="settings" />
   </div>
 </template>
 
 <script>
 import BottomNav from "@/components/BottomNav.vue";
-import { useTransactionsStore } from "@/stores/transactions";
-import { useAuthStore } from "@/stores/AuthStore";
 import { useCategoriesStore } from "@/stores/categories";
+import { useAuthStore } from "@/stores/AuthStore";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 
 export default {
-  name: "AddTransaction",
+  name: "AddCategories",
   components: { BottomNav },
 
   data() {
     return {
       type: "expense",
-      amount: null,
       category: "",
-      dateObj: new Date(),
-      dateInput: "",
-      showCalendar: false,
-      calendarMonth: new Date().getMonth(),
-      calendarYear: new Date().getFullYear(),
-      merchant: "",
-      notes: "",
       errors: {
-        amount: "",
         category: "",
-        date: "",
       },
       isLoading: false,
       saveError: "",
+      categoryDescription:
+        "Categories help you organize your transactions and provides meaniningful insights on your spending habits. Choose a name that clearly represents the type of expenses or income you want to categorize. For example, 'Groceries' for food shopping, 'Utilities' for bills, or 'Salary' for income. You can always edit or delete categories later if your needs change.",
     };
   },
-
-  computed: {
-    categoryOptions() {
-      return this.categoriesStore.categories
-        .filter((category) => category.type === this.type)
-        .map((c) => c.name);
-    },
-    monthYear() {
-      const date = new Date(this.calendarYear, this.calendarMonth);
-      return date.toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      });
-    },
-    calendarDays() {
-      const firstDay = new Date(this.calendarYear, this.calendarMonth, 1);
-      const lastDay = new Date(this.calendarYear, this.calendarMonth + 1, 0);
-      const daysInMonth = lastDay.getDate();
-      const startingDayOfWeek = firstDay.getDay();
-
-      const days = [];
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // Previous month's days
-      const prevMonthLastDay = new Date(
-        this.calendarYear,
-        this.calendarMonth,
-        0,
-      ).getDate();
-      for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-        const date = new Date(
-          this.calendarYear,
-          this.calendarMonth - 1,
-          prevMonthLastDay - i,
+  async mounted() {
+    try {
+      if (this.authStore.currentUserId) {
+        console.log("Before fetchCategories");
+        await this.categoriesStore.fetchCategories(
+          this.authStore.currentUserId,
         );
-        days.push({
-          date,
-          isCurrentMonth: false,
-          isToday: false,
-          isSelected: this.isSameDay(date, this.dateObj),
-        });
+        console.log("currentUserId:", this.authStore.currentUserId);
+        console.log("Categories in store:", this.categoriesStore.categories);
       }
-
-      // Current month's days
-      for (let i = 1; i <= daysInMonth; i++) {
-        const date = new Date(this.calendarYear, this.calendarMonth, i);
-        days.push({
-          date,
-          isCurrentMonth: true,
-          isToday: this.isSameDay(date, today),
-          isSelected: this.isSameDay(date, this.dateObj),
-        });
-      }
-
-      // Next month's days
-      const remainingDays = 42 - days.length; // 6 rows × 7 days
-      for (let i = 1; i <= remainingDays; i++) {
-        const date = new Date(this.calendarYear, this.calendarMonth + 1, i);
-        days.push({
-          date,
-          isCurrentMonth: false,
-          isToday: false,
-          isSelected: this.isSameDay(date, this.dateObj),
-        });
-      }
-
-      return days;
-    },
+    } catch (error) {
+      console.error("Mounted load error:", error);
+    }
   },
 
   created() {
@@ -334,171 +127,42 @@ export default {
     if (queryType === "income" || queryType === "expense") {
       this.type = queryType;
     }
-    const today = new Date();
-    this.dateObj = today;
-    this.dateInput = this.formatDateToDDMMYYYY(today);
-    this.calendarMonth = today.getMonth();
-    this.calendarYear = today.getFullYear();
   },
 
   methods: {
     handleTypeChange(newType) {
-      if (this.type === newType) return;
       this.type = newType;
-      if (!this.categoryOptions.includes(this.category)) {
-        this.category = "";
-        this.errors.category = "";
-      }
     },
-
-    handleAmountChange(value) {
-      this.amount = value;
-      this.errors.amount = "";
-    },
-
     handleCategoryChange(selectedCategory) {
       this.category = selectedCategory;
       this.errors.category = "";
     },
-
-    toggleCalendar() {
-      this.showCalendar = !this.showCalendar;
-    },
-
-    closeCalendar() {
-      this.showCalendar = false;
-    },
-
-    formatDateToDDMMYYYY(date) {
-      if (!date) return "";
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    },
-
-    parseDateFromDDMMYYYY(dateStr) {
-      if (!dateStr) return null;
-      const parts = dateStr.split("/");
-      if (parts.length !== 3) return null;
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const year = parseInt(parts[2], 10);
-      const date = new Date(year, month, day);
-      if (isNaN(date.getTime())) return null;
-      return date;
-    },
-
-    isSameDay(date1, date2) {
-      if (!date1 || !date2) return false;
-      return (
-        date1.getDate() === date2.getDate() &&
-        date1.getMonth() === date2.getMonth() &&
-        date1.getFullYear() === date2.getFullYear()
-      );
-    },
-
-    selectDate(date) {
-      this.dateObj = new Date(date);
-      this.dateInput = this.formatDateToDDMMYYYY(date);
-      this.calendarMonth = date.getMonth();
-      this.calendarYear = date.getFullYear();
-      this.errors.date = "";
-      this.closeCalendar();
-    },
-
-    selectToday() {
-      const today = new Date();
-      this.selectDate(today);
-    },
-
-    clearDate() {
-      this.dateObj = null;
-      this.dateInput = "";
-      this.errors.date = "";
-      this.closeCalendar();
-    },
-
-    prevMonth() {
-      if (this.calendarMonth === 0) {
-        this.calendarMonth = 11;
-        this.calendarYear--;
-      } else {
-        this.calendarMonth--;
-      }
-    },
-
-    nextMonth() {
-      if (this.calendarMonth === 11) {
-        this.calendarMonth = 0;
-        this.calendarYear++;
-      } else {
-        this.calendarMonth++;
-      }
-    },
-
-    handleDateInputChange() {
-      if (!this.dateInput) {
-        this.dateObj = null;
-        this.errors.date = "";
-        return;
-      }
-
-      const parsedDate = this.parseDateFromDDMMYYYY(this.dateInput);
-      if (parsedDate && !isNaN(parsedDate.getTime())) {
-        this.dateObj = parsedDate;
-        this.calendarMonth = parsedDate.getMonth();
-        this.calendarYear = parsedDate.getFullYear();
-        this.errors.date = "";
-      } else {
-        this.dateInput = this.formatDateToDDMMYYYY(this.dateObj);
-      }
-    },
-
-    handleMerchantChange(value) {
-      this.merchant = value;
-    },
-
-    handleNotesChange(value) {
-      this.notes = value;
-    },
-
     goBack() {
-      this.$router.push(`/transactions?tab=${this.type}`);
+      this.$router.push(`/settings/categories`);
     },
-
+    normalizeCategoryName(name) {
+      return name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+    },
     validateForm() {
       const errors = {};
       let isValid = true;
+      const categoryName = this.normalizeCategoryName(this.category);
+      const existingCategories = this.categoriesStore.categories
+        .filter((category) => category.type === this.type)
+        .map((category) => this.normalizeCategoryName(category.name));
 
-      // Validate amount
-      if (this.amount === null || this.amount === "") {
-        errors.amount = "Amount is required";
+      console.log("Existing categories:", existingCategories);
+
+      // Validate categories, check if the category already exists
+      if (!categoryName) {
+        errors.category = "Please enter a category name";
         isValid = false;
-      } else {
-        const amountNum = Number(this.amount);
-        if (isNaN(amountNum)) {
-          errors.amount = "Amount must be a valid number";
-          isValid = false;
-        } else if (amountNum <= 0) {
-          errors.amount = "Amount must be greater than 0";
-          isValid = false;
-        }
-      }
-
-      // Validate category
-      if (!this.category || this.category === "") {
-        errors.category = "Please select a category";
-        isValid = false;
-      }
-
-      // Validate date
-      if (
-        !this.dateObj ||
-        !(this.dateObj instanceof Date) ||
-        isNaN(this.dateObj.getTime())
-      ) {
-        errors.date = "Please select a date";
+      } else if (existingCategories.includes(categoryName)) {
+        errors.category =
+          "This category already exists, please add a different category";
         isValid = false;
       }
 
@@ -511,42 +175,35 @@ export default {
 
       if (!validation.isValid) {
         this.errors = validation.errors;
+        console.log("Validation errors:", this.errors);
+        alert("Validation error: " + this.errors.category);
         return;
       }
 
       this.isLoading = true;
 
       try {
-        await this.store.addTransaction({
+        await this.categoriesStore.addCategory({
           type: this.type,
-          amount: this.amount,
-          category: this.category,
-          date: this.dateObj,
+          name: this.category,
           userId: this.authStore.currentUserId,
-          merchant: this.merchant.trim(),
-          note: this.notes.trim(),
         });
 
-        alert("Transaction saved successfully!");
-        this.$router.push(`/transactions?tab=${this.type}`);
+        alert("New category saved successfully!");
+        this.goBack(); // Redirect back to categories page after sucessfully saving
       } catch (error) {
-        this.saveError = "Failed to save transaction. Please try again.";
+        this.saveError = "Failed to save category name. Please try again.";
         console.error("Save error:", error);
       } finally {
         this.isLoading = false;
       }
     },
   },
+
   setup() {
-    const store = useTransactionsStore();
-    const authStore = useAuthStore();
     const categoriesStore = useCategoriesStore();
-    return { store, authStore, categoriesStore };
-  },
-  async mounted() {
-    if (this.authStore.currentUserId) {
-      await this.categoriesStore.fetchCategories(this.authStore.currentUserId);
-    }
+    const authStore = useAuthStore();
+    return { categoriesStore, authStore };
   },
 };
 </script>

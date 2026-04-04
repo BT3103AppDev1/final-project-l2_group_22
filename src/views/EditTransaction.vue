@@ -1,39 +1,49 @@
 <template>
   <div class="web-page">
-    <!-- Header -->
     <header class="edit-header">
       <button class="icon-btn" @click="$router.back()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M19 12H5" />
+          <path d="M12 19l-7-7 7-7" />
         </svg>
       </button>
       <h1>Edit Transaction</h1>
       <button class="save-btn" @click="saveTransaction" :disabled="saving">
-        {{ saving ? 'Saving...' : 'Save' }}
+        {{ saving ? "Saving..." : "Save" }}
       </button>
     </header>
 
-    <!-- Loading -->
     <main v-if="loading" class="page-content">
       <div class="placeholder">Loading transaction...</div>
     </main>
 
-    <!-- Edit form -->
     <main v-else class="page-content">
-      <!-- Type toggle -->
       <div class="form-group">
         <label class="form-label">Type</label>
         <div class="type-toggle">
           <button
             class="toggle-btn"
-            :class="{ active: form.type === 'expense', expense: form.type === 'expense' }"
+            :class="{
+              active: form.type === 'expense',
+              expense: form.type === 'expense',
+            }"
             @click="form.type = 'expense'"
           >
             Expense
           </button>
           <button
             class="toggle-btn"
-            :class="{ active: form.type === 'income', income: form.type === 'income' }"
+            :class="{
+              active: form.type === 'income',
+              income: form.type === 'income',
+            }"
             @click="form.type = 'income'"
           >
             Income
@@ -41,10 +51,12 @@
         </div>
       </div>
 
-      <!-- Amount -->
       <div class="form-group">
         <label class="form-label">Amount <span class="required">*</span></label>
-        <div class="input-with-prefix" :class="{ 'input-error': errors.amount }">
+        <div
+          class="input-with-prefix"
+          :class="{ 'input-error': errors.amount }"
+        >
           <span class="prefix">$</span>
           <input
             v-model="form.amount"
@@ -58,21 +70,25 @@
         <span v-if="errors.amount" class="error-msg">{{ errors.amount }}</span>
       </div>
 
-      <!-- Category -->
       <div class="form-group">
-        <label class="form-label">Category <span class="required">*</span></label>
+        <label class="form-label"
+          >Category <span class="required">*</span></label
+        >
         <select
           v-model="form.category"
           class="form-input"
           :class="{ 'input-error': errors.category }"
         >
           <option value="" disabled>Select a category</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+          <option v-for="cat in categories" :key="cat" :value="cat">
+            {{ cat }}
+          </option>
         </select>
-        <span v-if="errors.category" class="error-msg">{{ errors.category }}</span>
+        <span v-if="errors.category" class="error-msg">{{
+          errors.category
+        }}</span>
       </div>
 
-      <!-- Date -->
       <div class="form-group">
         <label class="form-label">Date <span class="required">*</span></label>
         <input
@@ -84,7 +100,6 @@
         <span v-if="errors.date" class="error-msg">{{ errors.date }}</span>
       </div>
 
-      <!-- Merchant (optional) -->
       <div class="form-group">
         <label class="form-label">Merchant (Optional)</label>
         <input
@@ -95,7 +110,6 @@
         />
       </div>
 
-      <!-- Notes (optional) -->
       <div class="form-group">
         <label class="form-label">Notes (Optional)</label>
         <textarea
@@ -110,132 +124,143 @@
 </template>
 
 <script>
-import { doc, getDoc, Timestamp } from 'firebase/firestore'
-import { db } from '@/firebase'
-import { ED } from '@/services/editDelete'
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/firebase";
+import { ED } from "@/services/editDelete";
+import { useTransactionsStore } from "@/stores/transactions";
+import { useAuthStore } from "@/stores/AuthStore";
+import { useCategoriesStore } from "@/stores/categories";
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 
 export default {
-  name: 'EditTransaction',
+  name: "EditTransaction",
   data() {
     return {
       loading: true,
       saving: false,
       form: {
-        type: 'expense',
-        amount: '',
-        category: '',
-        dateStr: '',
-        merchant: '',
-        note: ''
+        type: "expense",
+        amount: "",
+        category: "",
+        dateStr: "",
+        merchant: "",
+        note: "",
       },
       errors: {},
-      // Default categories — update once Categories module (F-C-01) is built
-      categories: [
-        'Groceries',
-        'Dining',
-        'Transport',
-        'Entertainment',
-        'Shopping',
-        'Bills & Utilities',
-        'Healthcare',
-        'Education',
-        'Salary',
-        'Freelance',
-        'Other'
-      ]
-    }
+    };
+  },
+  computed: {
+    categories() {
+      return this.categoriesStore.categories
+        .filter((c) => c.type === this.form.type)
+        .map((c) => c.name);
+    },
   },
   async created() {
-    await this.fetchTransaction()
+    await this.fetchTransaction();
+  },
+  watch: {
+    "form.type"(nextType) {
+      if (!this.categories.includes(this.form.category)) {
+        this.form.category = "";
+      }
+    },
   },
   methods: {
     async fetchTransaction() {
-      const txnId = this.$route.params.id
+      const txnId = this.$route.params.id;
       try {
-        const txnRef = doc(db, 'transactions', txnId)
-        const txnSnap = await getDoc(txnRef)
+        const txnRef = doc(db, "transactions", txnId);
+        const txnSnap = await getDoc(txnRef);
 
         if (txnSnap.exists()) {
-          const data = txnSnap.data()
-          this.form.type = data.type || 'expense'
-          this.form.amount = data.amount || ''
-          this.form.category = data.category || ''
-          this.form.merchant = data.merchant || ''
-          this.form.note = data.note || ''
+          const data = txnSnap.data();
+          this.form.type = data.type || "expense";
+          this.form.amount = data.amount || "";
+          this.form.category = data.category || "";
+          this.form.merchant = data.merchant || "";
+          this.form.note = data.note || "";
 
-          // Convert Firestore Timestamp to yyyy-mm-dd for the date input
           if (data.date) {
             const date = data.date.toDate
               ? data.date.toDate()
-              : new Date(data.date)
-            this.form.dateStr = date.toISOString().split('T')[0]
+              : new Date(data.date);
+            this.form.dateStr = date.toISOString().split("T")[0];
           }
         }
       } catch (err) {
-        console.error('Error fetching transaction:', err)
+        console.error("Error fetching transaction:", err);
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
     validate() {
-      this.errors = {}
+      this.errors = {};
 
       if (!this.form.amount || Number(this.form.amount) <= 0) {
-        this.errors.amount = 'Amount must be greater than 0.'
+        this.errors.amount = "Amount must be greater than 0.";
       }
       if (!this.form.category) {
-        this.errors.category = 'Please select a category.'
+        this.errors.category = "Please select a category.";
       }
       if (!this.form.dateStr) {
-        this.errors.date = 'Please select a date.'
+        this.errors.date = "Please select a date.";
       }
 
-      return Object.keys(this.errors).length === 0
+      return Object.keys(this.errors).length === 0;
     },
 
     async saveTransaction() {
-      if (!this.validate()) return
+      if (!this.validate()) return;
 
-      this.saving = true
+      this.saving = true;
       try {
-        const txnId = this.$route.params.id
+        const txnId = this.$route.params.id;
         const updatedData = {
           type: this.form.type,
           amount: Number(this.form.amount),
           category: this.form.category,
           date: Timestamp.fromDate(new Date(this.form.dateStr)),
-          merchant: this.form.merchant || '',
-          note: this.form.note || ''
-        }
+          merchant: this.form.merchant || "",
+          note: this.form.note || "",
+        };
 
-        await ED.updateTransaction(txnId, updatedData)
-
-        // Navigate back to the details page to see updated data
-        this.$router.push(`/transactions/${txnId}`)
+        await ED.updateTransaction(txnId, updatedData);
+        this.$router.push(`/transactions/${txnId}`);
       } catch (err) {
-        console.error('Error updating transaction:', err)
-        alert('Failed to save changes. Please try again.')
+        console.error("Error updating transaction:", err);
+        alert("Failed to save changes. Please try again.");
       } finally {
-        this.saving = false
+        this.saving = false;
       }
+    },
+  },
+  setup() {
+    const store = useTransactionsStore();
+    const authStore = useAuthStore();
+    const categoriesStore = useCategoriesStore();
+    return { store, authStore, categoriesStore };
+  },
+  async mounted() {
+    if (this.authStore.currentUserId) {
+      await this.categoriesStore.fetchCategories(this.authStore.currentUserId);
     }
-  }
-}
+  },
+};
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
 
 .web-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: #f4f6f5;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
-/* Header */
 .edit-header {
   display: flex;
   align-items: center;
@@ -273,7 +298,7 @@ export default {
   padding: 8px 18px;
   font-size: 14px;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -287,7 +312,6 @@ export default {
   cursor: not-allowed;
 }
 
-/* Form */
 .page-content {
   flex: 1;
   padding: 20px;
@@ -309,7 +333,6 @@ export default {
   color: #d9534f;
 }
 
-/* Type toggle */
 .type-toggle {
   display: flex;
   background: #e8ecea;
@@ -324,7 +347,7 @@ export default {
   border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   background: transparent;
   color: #5e6c66;
   cursor: pointer;
@@ -343,7 +366,6 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Inputs */
 .form-input {
   width: 100%;
   padding: 12px 14px;
@@ -353,7 +375,7 @@ export default {
   color: #24302c;
   background: #fff;
   outline: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
@@ -420,7 +442,6 @@ select.form-input {
   margin-top: 4px;
 }
 
-/* Placeholder */
 .placeholder {
   padding: 24px;
   text-align: center;
