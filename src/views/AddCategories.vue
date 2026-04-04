@@ -10,7 +10,6 @@
 
     <main class="page-content">
       <form class="category-form" @submit.prevent="handleSave">
-
         <!-- Type Selector -->
         <div class="form-group">
           <label class="field-label">Type</label>
@@ -36,24 +35,27 @@
 
         <!-- Category -->
         <div class="form-group">
-          <label for="category" class="field-label"> Category Name <span class="required">*</span></label>
+          <label for="category" class="field-label">
+            Category Name <span class="required">*</span></label
+          >
           <input
             id="category"
-            type = "text"
+            type="text"
             :value="category"
             class="field-input"
             :class="{ 'input-error': errors.category }"
             @change="handleCategoryChange($event.target.value)"
-          >
-          <span v-if="errors.category" class="error-text">{{ errors.category }}</span>
+          />
+          <span v-if="errors.category" class="error-text">{{
+            errors.category
+          }}</span>
         </div>
 
         <!-- Category Description Message -->
         <div class="form-group">
-          <p for="description" class="field-label"> About Categories </p>
+          <p for="description" class="field-label">About Categories</p>
           <div class="categorydescription-box">{{ categoryDescription }}</div>
         </div>
-
 
         <!-- Error message -->
         <div v-if="saveError" class="save-error">{{ saveError }}</div>
@@ -62,13 +64,19 @@
         <div class="form-actions">
           <button type="submit" class="save-button" :disabled="isLoading">
             <span v-if="isLoading" class="spinner"></span>
-            <span class="button-text">{{ isLoading ? 'Saving...' : 'Save Category' }}</span>
+            <span class="button-text">{{
+              isLoading ? "Saving..." : "Save Category"
+            }}</span>
           </button>
-          <button type="button" class="cancel-button" @click="goBack" :disabled="isLoading">
+          <button
+            type="button"
+            class="cancel-button"
+            @click="goBack"
+            :disabled="isLoading"
+          >
             Cancel
           </button>
         </div>
-
       </form>
     </main>
 
@@ -77,10 +85,10 @@
 </template>
 
 <script>
-import BottomNav from "@/components/BottomNav.vue"
-import { useCategoriesStore } from "@/stores/categories"
-import { useAuthStore } from "@/stores/AuthStore"
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories"
+import BottomNav from "@/components/BottomNav.vue";
+import { useCategoriesStore } from "@/stores/categories";
+import { useAuthStore } from "@/stores/AuthStore";
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 
 export default {
   name: "AddCategories",
@@ -88,123 +96,120 @@ export default {
 
   data() {
     return {
-      type: 'expense',
-      category: '',
+      type: "expense",
+      category: "",
       errors: {
-        category: ''
+        category: "",
       },
       isLoading: false,
-      saveError: '',
-      categoryDescription: "Categories help you organize your transactions and provides meaniningful insights on your spending habits. Choose a name that clearly represents the type of expenses or income you want to categorize. For example, 'Groceries' for food shopping, 'Utilities' for bills, or 'Salary' for income. You can always edit or delete categories later if your needs change."
+      saveError: "",
+      categoryDescription:
+        "Categories help you organize your transactions and provides meaniningful insights on your spending habits. Choose a name that clearly represents the type of expenses or income you want to categorize. For example, 'Groceries' for food shopping, 'Utilities' for bills, or 'Salary' for income. You can always edit or delete categories later if your needs change.",
+    };
+  },
+  async mounted() {
+    try {
+      if (this.authStore.currentUserId) {
+        console.log("Before fetchCategories");
+        await this.categoriesStore.fetchCategories(
+          this.authStore.currentUserId,
+        );
+        console.log("currentUserId:", this.authStore.currentUserId);
+        console.log("Categories in store:", this.categoriesStore.categories);
+      }
+    } catch (error) {
+      console.error("Mounted load error:", error);
     }
   },
-async mounted() {
-
-  try {
-    if (this.authStore.currentUserId) {
-      console.log('Before fetchCategories')
-      await this.categoriesStore.fetchCategories(this.authStore.currentUserId)
-      console.log('currentUserId:', this.authStore.currentUserId)
-      console.log('Categories in store:', this.categoriesStore.categories)
-    }
-  } catch (error) {
-    console.error('Mounted load error:', error)
-  }
-},
 
   created() {
-    const queryType = this.$route.query.type
-    if (queryType === 'income' || queryType === 'expense') {
-      this.type = queryType
+    const queryType = this.$route.query.type;
+    if (queryType === "income" || queryType === "expense") {
+      this.type = queryType;
     }
   },
 
   methods: {
     handleTypeChange(newType) {
-      this.type = newType
+      this.type = newType;
     },
     handleCategoryChange(selectedCategory) {
-      this.category = selectedCategory
-      this.errors.category = ''
+      this.category = selectedCategory;
+      this.errors.category = "";
     },
     goBack() {
-      this.$router.push(`/settings/categories`)
+      this.$router.push(`/settings/categories`);
     },
     normalizeCategoryName(name) {
-      return name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      return name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
     },
     validateForm() {
-      const errors = {}
-      let isValid = true
+      const errors = {};
+      let isValid = true;
       const categoryName = this.normalizeCategoryName(this.category);
-      const customCategories = this.categoriesStore.categories
-                              .filter(category => category.type === this.type)
-                              .map(category => category.name)
+      const existingCategories = this.categoriesStore.categories
+        .filter((category) => category.type === this.type)
+        .map((category) => this.normalizeCategoryName(category.name));
 
-      const defaultCategories = this.type === "expense"
-                              ? EXPENSE_CATEGORIES
-                              : INCOME_CATEGORIES
-
-      const existingCategories = customCategories.concat(defaultCategories)
-                                .map(category => this.normalizeCategoryName(category))
-      
-      console.log("Existing categories:", existingCategories)
+      console.log("Existing categories:", existingCategories);
 
       // Validate categories, check if the category already exists
       if (!categoryName) {
-        errors.category = 'Please enter a category name'
-        isValid = false
+        errors.category = "Please enter a category name";
+        isValid = false;
       } else if (existingCategories.includes(categoryName)) {
-        errors.category = 'This category already exists, please add a different category'
-        isValid = false
+        errors.category =
+          "This category already exists, please add a different category";
+        isValid = false;
       }
 
-      return { isValid, errors }
+      return { isValid, errors };
     },
 
     async handleSave() {
-      this.saveError = ''
-      const validation = this.validateForm()
+      this.saveError = "";
+      const validation = this.validateForm();
 
       if (!validation.isValid) {
-        this.errors = validation.errors
-        console.log("Validation errors:", this.errors)
-        alert('Validation error: ' + this.errors.category)
-        return
+        this.errors = validation.errors;
+        console.log("Validation errors:", this.errors);
+        alert("Validation error: " + this.errors.category);
+        return;
       }
 
-      this.isLoading = true
+      this.isLoading = true;
 
-      try { 
+      try {
         await this.categoriesStore.addCategory({
           type: this.type,
           name: this.category,
-          userId: this.authStore.currentUserId
-        })
+          userId: this.authStore.currentUserId,
+        });
 
-        
-
-        alert('New category saved successfully!')
-        this.goBack() // Redirect back to categories page after sucessfully saving
+        alert("New category saved successfully!");
+        this.goBack(); // Redirect back to categories page after sucessfully saving
       } catch (error) {
-        this.saveError = 'Failed to save category name. Please try again.'
-        console.error('Save error:', error)
+        this.saveError = "Failed to save category name. Please try again.";
+        console.error("Save error:", error);
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
-    }
+    },
   },
 
   setup() {
-    const categoriesStore = useCategoriesStore()
-    const authStore = useAuthStore()
-    return { categoriesStore, authStore }
-  }
-}
+    const categoriesStore = useCategoriesStore();
+    const authStore = useAuthStore();
+    return { categoriesStore, authStore };
+  },
+};
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
 
 :root {
   --bg: #f4f6f5;
@@ -219,7 +224,7 @@ async mounted() {
   display: flex;
   flex-direction: column;
   background: var(--bg);
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 .page-header {
@@ -321,7 +326,7 @@ async mounted() {
   color: var(--text-900);
   font-size: 15px;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   cursor: pointer;
   text-align: center;
   border-radius: 10px;
@@ -346,7 +351,7 @@ async mounted() {
   border-radius: 12px;
   padding: 14px 16px;
   font-size: 15px;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   color: var(--text-900);
   background: white;
   outline: none;
@@ -364,7 +369,9 @@ async mounted() {
 .field-input:focus {
   border-color: var(--brand);
   background: white;
-  box-shadow: 0 0 0 4px rgba(94, 148, 134, 0.1), 0 0 0 1px rgba(94, 148, 134, 0.2);
+  box-shadow:
+    0 0 0 4px rgba(94, 148, 134, 0.1),
+    0 0 0 1px rgba(94, 148, 134, 0.2);
 }
 
 .field-input.input-error {
@@ -374,7 +381,9 @@ async mounted() {
 
 .field-input.input-error:focus {
   border-color: #d9534f;
-  box-shadow: 0 0 0 4px rgba(217, 83, 79, 0.1), 0 0 0 1px rgba(217, 83, 79, 0.2);
+  box-shadow:
+    0 0 0 4px rgba(217, 83, 79, 0.1),
+    0 0 0 1px rgba(217, 83, 79, 0.2);
 }
 
 /* Amount with currency prefix */
@@ -433,7 +442,7 @@ select.field-input {
 }
 
 .error-text::before {
-  content: '⚠';
+  content: "⚠";
   font-size: 14px;
 }
 
@@ -466,7 +475,7 @@ select.field-input {
 }
 
 .save-error::before {
-  content: '✕';
+  content: "✕";
   font-size: 18px;
   font-weight: 700;
 }
@@ -487,7 +496,7 @@ select.field-input {
   padding: 14px 24px;
   font-size: 16px;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   border-radius: 26px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -529,7 +538,9 @@ select.field-input {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .button-text {
@@ -572,22 +583,29 @@ select.field-input {
   border-radius: 12px;
   padding: 14px 48px 14px 16px;
   font-size: 15px;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   color: var(--text-900);
   background: white;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   box-sizing: border-box;
 }
 
-.date-input:hover { border-color: #d1dcd8; }
+.date-input:hover {
+  border-color: #d1dcd8;
+}
 
 .date-input:focus {
   border-color: var(--brand);
   box-shadow: 0 0 0 4px rgba(94, 148, 134, 0.1);
 }
 
-.date-input.input-error { border-color: #f5a5a0; background: #fff9f9; }
+.date-input.input-error {
+  border-color: #f5a5a0;
+  background: #fff9f9;
+}
 .date-input.input-error:focus {
   border-color: #d9534f;
   box-shadow: 0 0 0 4px rgba(217, 83, 79, 0.1);
@@ -612,14 +630,17 @@ select.field-input {
   background: rgba(94, 148, 134, 0.1);
 }
 
-.calendar-icon-button:disabled { opacity: 0.45; cursor: not-allowed; }
+.calendar-icon-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 /* ── Calendar popup ── */
 .calendar-popup {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  right: 0;          /* stretches to match .date-field-wrapper exactly */
+  right: 0; /* stretches to match .date-field-wrapper exactly */
   width: auto;
   background: white;
   border: 1.5px solid #e2e8e0;
@@ -653,7 +674,9 @@ select.field-input {
   flex-shrink: 0;
 }
 
-.month-nav:hover { background: #f0f0f0; }
+.month-nav:hover {
+  background: #f0f0f0;
+}
 
 .month-title {
   font-size: 14px;
@@ -691,9 +714,11 @@ select.field-input {
   border-radius: 50%;
   background: transparent;
   font-size: 13px;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   font-weight: 400;
   color: var(--text-900);
   display: flex;
@@ -723,7 +748,9 @@ select.field-input {
   font-weight: 600;
 }
 
-.calendar-day.is-selected:hover { background: #4d7d70; }
+.calendar-day.is-selected:hover {
+  background: #4d7d70;
+}
 
 .calendar-footer {
   display: flex;
@@ -736,7 +763,7 @@ select.field-input {
   background: transparent;
   border: none;
   font-size: 13px;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 500;
   cursor: pointer;
   padding: 4px 8px;
@@ -744,9 +771,17 @@ select.field-input {
   transition: background 0.15s;
 }
 
-.footer-button.clear { color: #d9534f; }
-.footer-button.clear:hover { background: #fff0f0; }
+.footer-button.clear {
+  color: #d9534f;
+}
+.footer-button.clear:hover {
+  background: #fff0f0;
+}
 
-.footer-button.today { color: var(--brand); }
-.footer-button.today:hover { background: rgba(94, 148, 134, 0.08); }
+.footer-button.today {
+  color: var(--brand);
+}
+.footer-button.today:hover {
+  background: rgba(94, 148, 134, 0.08);
+}
 </style>

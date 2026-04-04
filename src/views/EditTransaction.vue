@@ -151,20 +151,9 @@ export default {
   },
   computed: {
     categories() {
-      const defaults =
-        this.form.type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-
-      const customExpenses = this.categoriesStore.categories
-        .filter((category) => category.type === "expense")
-        .map((category) => category.name);
-
-      const customIncomes = this.categoriesStore.categories
-        .filter((category) => category.type === "income")
-        .map((category) => category.name);
-
-      return this.form.type === "income"
-        ? [...new Set([...defaults, ...customIncomes])]
-        : [...new Set([...defaults, ...customExpenses])];
+      return this.categoriesStore.categories
+        .filter((c) => c.type === this.form.type)
+        .map((c) => c.name);
     },
   },
   async created() {

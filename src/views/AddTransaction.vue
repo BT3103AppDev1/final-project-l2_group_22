@@ -261,20 +261,9 @@ export default {
 
   computed: {
     categoryOptions() {
-      const defaults =
-        this.type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-
-      const customExpenses = this.categoriesStore.categories
-        .filter((category) => category.type === "expense")
-        .map((category) => category.name);
-
-      const customIncomes = this.categoriesStore.categories
-        .filter((category) => category.type === "income")
-        .map((category) => category.name);
-
-      return this.type === "income"
-        ? [...new Set([...defaults, ...customIncomes])]
-        : [...new Set([...defaults, ...customExpenses])];
+      return this.categoriesStore.categories
+        .filter((category) => category.type === this.type)
+        .map((c) => c.name);
     },
     monthYear() {
       const date = new Date(this.calendarYear, this.calendarMonth);

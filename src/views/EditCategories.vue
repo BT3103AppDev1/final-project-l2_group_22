@@ -27,27 +27,8 @@
     <main v-else class="page-content">
       <div class="form-group">
         <label class="form-label">Type</label>
-        <div class="type-toggle">
-          <button
-            class="toggle-btn"
-            :class="{
-              active: form.type === 'expense',
-              expense: form.type === 'expense',
-            }"
-            @click="form.type = 'expense'"
-          >
-            Expense
-          </button>
-          <button
-            class="toggle-btn"
-            :class="{
-              active: form.type === 'income',
-              income: form.type === 'income',
-            }"
-            @click="form.type = 'income'"
-          >
-            Income
-          </button>
+        <div class="readonly-type" :class="form.type">
+          {{ form.type === "income" ? "Income" : "Expense" }}
         </div>
       </div>
 
@@ -171,18 +152,13 @@ export default {
   },
   computed: {
     categories() {
-      const defaults =
-        this.form.type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
-
-      const custom = this.categoriesStore.categories
+      return this.categoriesStore.categories
         .filter(
           (category) =>
             category.type === this.form.type &&
             category.id !== this.$route.params.id,
         )
         .map((category) => category.name);
-
-      return [].concat(defaults, custom);
     },
     transactionCounts() {
       return this.transactionsStore.transactions.reduce(
@@ -249,6 +225,8 @@ export default {
         this.normalizeCategoryName(category),
       );
 
+      console.log("Existing category names:", existingNames);
+
       if (mode === "save") {
         if (!this.form.name.trim()) {
           this.errors.name =
@@ -272,7 +250,7 @@ export default {
 
           const snapshot = await getDocs(q);
           if (!snapshot.empty) {
-            this.deleteError = `The ${originalCategoryName} category is currently used in transactions and cannot be deleted.`;
+            this.deleteError = `The ${originalCategoryName} category is currently used in transactions and cannot be deleted. Reassign affected transactions before completing deletion.`;
           }
         } catch (error) {
           console.error("Error validating category deletion:", error);
@@ -292,14 +270,13 @@ export default {
         const categoryId = this.$route.params.id;
         const categoryRef = doc(db, "categories", categoryId);
 
-        const newType = this.form.type;
-        const oldType = this.originalCategory.type;
+        const currentType = this.originalCategory.type;
 
         const newName = this.form.name.trim();
         const oldName = this.originalCategory.name.trim();
 
         const updatedData = {
-          type: newType,
+          type: currentType,
           name: newName,
         };
 
@@ -308,7 +285,7 @@ export default {
         const transactionsQuery = query(
           collection(db, "transactions"),
           where("userId", "==", this.authStore.currentUserId),
-          where("type", "==", oldType),
+          where("type", "==", currentType),
           where("category", "==", oldName),
         );
 
@@ -319,7 +296,7 @@ export default {
 
           transactionsSnapshot.forEach((doc) => {
             batch.update(doc.ref, {
-              type: newType,
+              type: currentType,
               category: newName,
             });
           });
@@ -468,11 +445,25 @@ export default {
   color: #d9534f;
 }
 
-.type-toggle {
-  display: flex;
-  background: #e8ecea;
-  border-radius: 24px;
-  padding: 4px;
+.readonly-type {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #dfe6e3;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "Poppins", sans-serif;
+  background: #f8faf9;
+  color: #24302c;
+  box-sizing: border-box;
+}
+
+.readonly-type.expense {
+  color: #d9534f;
+}
+
+.readonly-type.income {
+  color: #2d8a4f;
 }
 
 .toggle-btn {

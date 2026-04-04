@@ -26,9 +26,14 @@
     </header>
 
     <main class="page-content">
-      <p v-if="store.loading" class="status-message">Loading categories...</p>
-      <p v-else-if="store.error" class="status-message status-message--error">
-        {{ store.error }}
+      <p v-if="categoriesStore.loading" class="status-message">
+        Loading categories...
+      </p>
+      <p
+        v-else-if="categoriesStore.error"
+        class="status-message status-message--error"
+      >
+        {{ categoriesStore.error }}
       </p>
 
       <section
@@ -113,17 +118,7 @@ export default {
       }, {});
     },
     categorySections() {
-      const defaultExpense = EXPENSE_CATEGORIES.map((name) => ({
-        name,
-        count: this.transactionCounts[`expense:${name}`] || 0,
-      }));
-
-      const defaultIncome = INCOME_CATEGORIES.map((name) => ({
-        name,
-        count: this.transactionCounts[`income:${name}`] || 0,
-      }));
-
-      const customExpense = this.categoriesStore.categories
+      const expenseCategories = this.categoriesStore.categories
         .filter((category) => category.type === "expense")
         .map((category) => ({
           id: category.id,
@@ -131,7 +126,7 @@ export default {
           count: this.transactionCounts[`expense:${category.name}`] || 0,
         }));
 
-      const customIncome = this.categoriesStore.categories
+      const incomeCategories = this.categoriesStore.categories
         .filter((category) => category.type === "income")
         .map((category) => ({
           id: category.id,
@@ -143,12 +138,12 @@ export default {
         {
           type: "expense",
           label: "EXPENSE CATEGORIES",
-          items: [].concat(defaultExpense, customExpense),
+          items: expenseCategories,
         },
         {
           type: "income",
           label: "INCOME CATEGORIES",
-          items: [].concat(defaultIncome, customIncome),
+          items: incomeCategories,
         },
       ];
     },
