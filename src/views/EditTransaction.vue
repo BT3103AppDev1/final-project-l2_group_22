@@ -123,16 +123,6 @@ import { useAuthStore } from "@/stores/AuthStore";
 import { useCategoriesStore } from "@/stores/categories";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 
-const EXPENSE_CATEGORIES = [
-  'Groceries', 'Dining', 'Transportation', 'Shopping',
-  'Entertainment', 'Bills & Utilities', 'Healthcare',
-  'Education', 'Other Expense'
-]
-
-const INCOME_CATEGORIES = [
-  'Salary', 'Freelance', 'Investment', 'Bonus', 'Gift', 'Other Income'
-]
-
 export default {
   name: "EditTransaction",
   data() {
