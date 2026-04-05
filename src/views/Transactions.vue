@@ -75,6 +75,7 @@ export default {
         }
     },
     mounted() {
+        this.store.fetchTransactions(this.authStore.currentUserId)
         if (this.$route.query.tab === 'income') {
             this.activeTab = 'income'
         }

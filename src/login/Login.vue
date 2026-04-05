@@ -12,7 +12,9 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M7 15h-3a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v3" />
+            <path
+              d="M7 15h-3a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v3"
+            />
             <path
               d="M7 9m0 1a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1z"
             />
@@ -69,7 +71,12 @@
 
       <div id="google-signin">
         <button @click="googleSignIn" class="google-btn" type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 48 48"
+            width="20px"
+            height="20px"
+          >
             <path
               fill="#FFC107"
               d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
@@ -118,10 +125,17 @@ import {
   browserSessionPersistence,
 } from "firebase/auth";
 import firebaseApp, { firebaseConfigError } from "../firebase";
+import { setRememberMeCookie, getRememberMeCookie } from "@/utils/rememberMe";
 import {
-  setRememberMeCookie,
-  getRememberMeCookie,
-} from "@/utils/rememberMe";
+  collection,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+  doc,
+} from "firebase/firestore";
+import { db } from "@/firebase";
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 
 export default {
   data() {
@@ -157,7 +171,11 @@ export default {
       setRememberMeCookie(this.rememberMe);
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          this.email,
+          this.password,
+        );
         const user = userCredential.user;
 
         if (!user.emailVerified) {
@@ -168,12 +186,68 @@ export default {
         }
 
         await user.reload();
+        await this.ensureDefaultCategories(user.uid);
         this.errorMessage = "";
         this.$router.push("/dashboard");
       } catch (error) {
         const errorCode = error.code;
         this.errorMessage = this.mapFirebaseAuthError(errorCode);
       }
+    },
+    // When a user logs in, check if they have the default transaction categories written into their Firebase.
+    // If not, write default transaction categories into the categories document of Firebase, else do nothing
+    async ensureDefaultCategories(userId) {
+      if (!userId) return;
+
+      const categoriesRef = collection(db, "categories");
+      const existingQuery = query(categoriesRef, where("userId", "==", userId));
+      const existingSnapshot = await getDocs(existingQuery);
+
+      const existingCategories = new Set(
+        existingSnapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            if (!data.defaultKey) return null;
+            return `${data.type}-${data.defaultKey}`;
+          })
+          .filter(Boolean),
+      );
+
+      const defaultCategories = [
+        ...EXPENSE_CATEGORIES.map((name) => ({
+          type: "expense",
+          name,
+          defaultKey: name.toLowerCase().replace(/[^a-z0-9]/g, ""),
+        })),
+        ...INCOME_CATEGORIES.map((name) => ({
+          type: "income",
+          name,
+          defaultKey: name.toLowerCase().replace(/[^a-z0-9]/g, ""),
+        })),
+      ];
+
+      const missingDefaultCategories = defaultCategories.filter(
+        (category) =>
+          !existingCategories.has(`${category.type}-${category.defaultKey}`),
+      );
+
+      if (missingDefaultCategories.length === 0) return;
+
+      const batch = writeBatch(db);
+
+      missingDefaultCategories.forEach((category) => {
+        const newDocRef = doc(categoriesRef);
+        batch.set(newDocRef, {
+          userId,
+          type: category.type,
+          name: category.name,
+          defaultKey: category.defaultKey,
+          isDefault: true,
+          createdAt: new Date(),
+        });
+      });
+
+      await batch.commit();
     },
     getLoginFormErrors(emailValue, passwordValue) {
       const errors = [];
@@ -212,7 +286,8 @@ export default {
         "auth/invalid-credential": "Invalid email or password",
         "auth/user-disabled": "This account has been disabled",
         "auth/too-many-requests": "Too many attempts. Please try again later",
-        "auth/network-request-failed": "Network error. Please check your connection",
+        "auth/network-request-failed":
+          "Network error. Please check your connection",
         "auth/popup-closed-by-user": "Google sign-in was cancelled",
         "auth/account-exists-with-different-credential":
           "This email already exists with a different sign-in method. Use your email/password account instead.",
@@ -240,7 +315,10 @@ export default {
           try {
             await deleteUser(user);
           } catch (deleteError) {
-            console.warn("Could not remove newly created Google account:", deleteError);
+            console.warn(
+              "Could not remove newly created Google account:",
+              deleteError,
+            );
           }
 
           await signOut(auth);
@@ -250,6 +328,7 @@ export default {
         }
 
         this.errorMessage = "";
+        await this.ensureDefaultCategories(user.uid);
         this.$router.push("/dashboard");
       } catch (error) {
         const errorCode = error.code;

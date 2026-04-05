@@ -1,8 +1,8 @@
 <template>
-    <div class="web-page">
-        <header class="page-header">
-            <h1>Insights</h1>
-        </header>
+  <div class="web-page">
+    <header class="page-header">
+      <h1>Insights</h1>
+    </header>
 
         <main class="page-content">
             <div class="period-selector">
@@ -1090,8 +1090,8 @@ export default {
 }
 
 .page-content {
-    padding: 20px;
-    flex: 1;
+  padding: 20px;
+  flex: 1;
 }
 
 .period-selector {
@@ -1328,8 +1328,8 @@ export default {
 }
 
 .why-icon {
-    width: 16px;
-    height: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .empty-note {
