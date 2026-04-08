@@ -263,7 +263,7 @@ export default {
 
     barWidth(actual, target) {
       if (!target || target <= 0) return '0%'
-      const pct = Math.min((actual / target) * 100, 100)
+      const pct = Math.max(0, Math.min((actual / target) * 100, 100))
       return `${pct.toFixed(1)}%`
     }
   }
@@ -693,7 +693,7 @@ export default {
 }
 
 .goal-progress-bar.status-on-track {
-  background: var(--income);
+  background: green;
 }
 
 .goal-progress-bar.status-at-risk {
