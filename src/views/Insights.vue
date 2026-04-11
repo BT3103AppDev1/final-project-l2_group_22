@@ -361,6 +361,63 @@
                         Why this?
                     </button>
                 </section>
+
+                <!-- Goal Insight Cards (F-G-03) -->
+                <section v-if="goalInsights.length" class="insight-bubble goal-section">
+                    <div class="card-top">
+                        <div class="icon-circle goal-icon">
+                            <svg viewBox="0 0 24 24" class="card-icon" fill="none">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8" />
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                            </svg>
+                        </div>
+
+                        <div>
+                            <p class="card-label">FINANCIAL GOAL PROGRESS</p>
+                            <p class="card-subtext">How your spending aligns with your targets</p>
+                        </div>
+                    </div>
+
+                    <div class="goal-cards-list">
+                        <div v-for="gi in goalInsights" :key="gi.goal.id" class="goal-insight-card">
+                            <div class="goal-insight-header">
+                                <p class="goal-insight-name">{{ gi.goal.displayName }}</p>
+                                <span class="status-badge" :class="gi.statusClass">{{ gi.status }}</span>
+                            </div>
+                            <p class="goal-insight-statement">{{ gi.statement }}</p>
+                            <div class="goal-insight-numbers">
+                                <div class="goal-number-block">
+                                    <span class="goal-number-label">Actual</span>
+                                    <span class="goal-number-value">{{ formatCurrency(gi.actual) }}</span>
+                                </div>
+                                <div class="goal-number-block">
+                                    <span class="goal-number-label">Target</span>
+                                    <span class="goal-number-value">{{ formatCurrency(gi.goal.targetAmount) }}</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill goal-fill" :class="gi.statusClass" :style="{ width: gi.progressWidth }"></div>
+                            </div>
+                            <button class="why-button" @click="openGoalExplanation(gi)">
+                                <svg class="why-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"></circle>
+                                    <path d="M9.8 9.5C9.8 8.3 10.8 7.5 12 7.5C13.2 7.5 14.2 8.3 14.2 9.5C14.2 10.4 13.7 11 12.8 11.5C12.2 11.9 12 12.2 12 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                                    <circle cx="12" cy="16.5" r="1" fill="currentColor"></circle>
+                                </svg>
+                                Why this?
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="adjust-goals-btn" @click="$router.push('/goals')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                        Manage Goals
+                    </button>
+                </section>
             </div>
         </main>
 
@@ -427,6 +484,15 @@
             @close="closeExplanation"
         />
 
+        <GoalInsightExplanation
+            v-if="activeExplanation === 'goal-insight' && selectedGoalInsight"
+            :goal="selectedGoalInsight.goal"
+            :actual="selectedGoalInsight.actual"
+            :status="selectedGoalInsight.status"
+            :period-label="periodLabel"
+            @close="closeExplanation"
+        />
+
         <BottomNav currentTab="insights" />
     </div>
 </template>
@@ -441,8 +507,10 @@ import CategoryVolatilityExplanation from "@/insight/CategoryVolatilityExplanati
 import RecurringExpensesExplanation from "@/insight/RecurringExpensesExplanation.vue"
 import WeekdaySpendingExplanation from "@/insight/WeekdaySpendingExplanation.vue"
 import SeasonalSpendingExplanation from "@/insight/SeasonalSpendingExplanation.vue"
+import GoalInsightExplanation from "@/insight/GoalInsightExplanation.vue"
 import { useTransactionsStore } from "@/stores/transactions"
 import { useAuthStore } from "@/stores/AuthStore"
+import { useGoalStore } from "@/stores/GoalStore"
 
 const WEEKDAY_LABELS = [
     "Sunday",
@@ -480,17 +548,20 @@ export default {
         CategoryVolatilityExplanation,
         RecurringExpensesExplanation,
         WeekdaySpendingExplanation,
-        SeasonalSpendingExplanation
+        SeasonalSpendingExplanation,
+        GoalInsightExplanation
     },
     setup() {
         const store = useTransactionsStore()
         const authStore = useAuthStore()
-        return { store, authStore }
+        const goalStore = useGoalStore()
+        return { store, authStore, goalStore }
     },
     data() {
         return {
             selectedPeriod: "this-month",
-            activeExplanation: null
+            activeExplanation: null,
+            selectedGoalInsight: null
         }
     },
     computed: {
@@ -975,6 +1046,61 @@ export default {
             }
 
             return "Seasonal spending is fairly even across months, with no major recurring spike period yet."
+        },
+        goalInsights() {
+            if (!this.goalStore.goals.length) return []
+
+            return this.goalStore.goals.map(goal => {
+                const formatted = this.goalStore.formattedGoals.find(g => g.id === goal.id) || goal
+                const periodTxns = this.periodTransactions.map(t => ({
+                    type: t.normalizedType,
+                    amount: t.normalizedAmount,
+                    category: t.normalizedCategory
+                }))
+                const actual = this.goalStore.goalActual(goal, periodTxns)
+                const status = this.goalStore.goalStatus(actual, goal.targetAmount)
+                const isSpending = goal.type !== 'Monthly Savings Target'
+                const pct = goal.targetAmount > 0 ? (actual / goal.targetAmount) * 100 : 0
+
+                let statement
+                if (isSpending) {
+                    if (status === 'Exceeded') {
+                        statement = `${formatted.displayName} has been exceeded`
+                    } else if (status === 'At risk') {
+                        statement = `${formatted.displayName} is at risk`
+                    } else {
+                        statement = `${formatted.displayName} is on track`
+                    }
+                } else {
+                    if (status === 'Exceeded') {
+                        statement = `Savings target met!`
+                    } else if (status === 'At risk') {
+                        statement = `Savings target is within reach`
+                    } else {
+                        statement = `Savings target needs attention`
+                    }
+                }
+
+                let statusClass
+                if (status === 'Exceeded') {
+                    statusClass = isSpending ? 'exceeded' : 'met'
+                } else if (status === 'At risk') {
+                    statusClass = 'at-risk'
+                } else {
+                    statusClass = 'on-track'
+                }
+
+                const progressWidth = `${Math.min(pct, 100).toFixed(1)}%`
+
+                return {
+                    goal: formatted,
+                    actual,
+                    status,
+                    statement,
+                    statusClass,
+                    progressWidth
+                }
+            })
         }
     },
     watch: {
@@ -982,6 +1108,7 @@ export default {
             immediate: true,
             handler(userId) {
                 this.store.fetchTransactions(userId)
+                this.goalStore.init(userId)
             }
         }
     },
@@ -991,6 +1118,11 @@ export default {
         },
         closeExplanation() {
             this.activeExplanation = null
+            this.selectedGoalInsight = null
+        },
+        openGoalExplanation(goalInsight) {
+            this.selectedGoalInsight = goalInsight
+            this.activeExplanation = 'goal-insight'
         },
         getTransactionDate(transaction) {
             let date = transaction?.date
@@ -1495,5 +1627,147 @@ export default {
     .savings-rate-value {
         white-space: normal;
     }
+}
+
+/* Goal Insight Cards (F-G-03) */
+.goal-section {
+    border: 1.5px solid #d1fae5;
+}
+
+.icon-circle.goal-icon {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.goal-cards-list {
+    margin-top: 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.goal-insight-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+    padding: 14px;
+}
+
+.goal-insight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.goal-insight-name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.status-badge.on-track {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.at-risk {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.exceeded {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.met {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.goal-insight-statement {
+    margin: 8px 0 0;
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.goal-insight-numbers {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.goal-number-block {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.goal-number-label {
+    display: block;
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.goal-number-value {
+    display: block;
+    margin-top: 4px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.progress-fill.goal-fill.on-track {
+    background: linear-gradient(90deg, #4f8a73, #7cc39f);
+}
+
+.progress-fill.goal-fill.at-risk {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.progress-fill.goal-fill.exceeded {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.progress-fill.goal-fill.met {
+    background: linear-gradient(90deg, #4f8a73, #7cc39f);
+}
+
+.adjust-goals-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 10px 0;
+    border: 1px solid #d1fae5;
+    border-radius: 12px;
+    background: #ecfdf5;
+    color: #065f46;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.15s;
+}
+
+.adjust-goals-btn:hover {
+    background: #d1fae5;
 }
 </style>
