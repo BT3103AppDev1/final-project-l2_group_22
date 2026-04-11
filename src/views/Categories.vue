@@ -298,10 +298,14 @@ export default {
 }
 
 .category-card {
+  --category-row-height: 84px;
   background: #fff;
   border: 1px solid rgba(16, 24, 40, 0.04);
   border-radius: 18px;
   overflow: hidden;
+  max-height: calc(var(--category-row-height) * 10);
+  /* Ensure that if there are > 10 categories, list will display a scrollbar instead to prevent overflow */
+  overflow-y: auto;
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
 }
 
@@ -313,6 +317,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-height: var(--category-row-height);
   padding: 16px 18px;
   cursor: pointer;
 }
@@ -348,7 +353,7 @@ export default {
 .fab {
   position: fixed;
   right: 20px;
-  bottom: 24px;
+  bottom: calc(58px + env(safe-area-inset-bottom) + 18px);
   width: 58px;
   height: 58px;
   border: none;

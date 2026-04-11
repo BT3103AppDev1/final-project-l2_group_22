@@ -30,14 +30,20 @@
         <div class="type-toggle">
           <button
             class="toggle-btn"
-            :class="{ active: form.type === 'expense', expense: form.type === 'expense' }"
+            :class="{
+              active: form.type === 'expense',
+              expense: form.type === 'expense',
+            }"
             @click="handleTypeChange('expense')"
           >
             Expense
           </button>
           <button
             class="toggle-btn"
-            :class="{ active: form.type === 'income', income: form.type === 'income' }"
+            :class="{
+              active: form.type === 'income',
+              income: form.type === 'income',
+            }"
             @click="handleTypeChange('income')"
           >
             Income
@@ -74,7 +80,9 @@
           :class="{ 'input-error': errors.category }"
         >
           <option value="" disabled>Select a category</option>
-          <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
+          <option v-for="cat in categories" :key="cat" :value="cat">
+            {{ cat }}
+          </option>
         </select>
         <span v-if="errors.category" class="error-msg">{{
           errors.category
@@ -121,7 +129,6 @@ import { db } from "@/firebase";
 import { useTransactionsStore } from "@/stores/transactions";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useCategoriesStore } from "@/stores/categories";
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 
 export default {
   name: "EditTransaction",
@@ -137,49 +144,49 @@ export default {
         merchant: "",
         note: "",
       },
-      errors: {}
-    }
+      errors: {},
+    };
   },
   computed: {
-    categoryOptions() {
-      return this.form.type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
-    }
+    categories() {
+      return this.categoriesStore.categories
+        .filter((c) => c.type === this.form.type)
+        .map((c) => c.name);
+    },
   },
   async created() {
     await this.fetchTransaction();
   },
-  watch: {
-    "form.type"(nextType) {
-      if (!this.categories.includes(this.form.category)) {
-        this.form.category = "";
-      }
-    },
-  },
   methods: {
     normalizeType(type) {
-      return String(type).toLowerCase() === 'income' ? 'income' : 'expense'
+      return String(type).toLowerCase() === "income" ? "income" : "expense";
     },
 
+    // Older transaction category names may not match with current ones, so we normalize it to ensure it is displayed correctly
     normalizeCategory(category, type = this.form.type) {
-      const raw = String(category || '').trim()
-      if (!raw) return ''
+      const raw = String(category || "").trim();
+      if (!raw) return "";
 
-      if (raw === 'Transport') return 'Transportation'
-      if (raw === 'Other') return type === 'income' ? 'Other Income' : 'Other Expense'
+      if (raw === "Transport") return "Transportation";
+      if (raw === "Other")
+        return type === "income" ? "Other Income" : "Other Expense";
 
-      return raw
+      return raw;
     },
 
     handleTypeChange(nextType) {
-      if (this.form.type === nextType) return
+      if (this.form.type === nextType) return;
 
-      this.form.type = nextType
-      const normalizedCategory = this.normalizeCategory(this.form.category, nextType)
+      this.form.type = nextType;
+      const normalizedCategory = this.normalizeCategory(
+        this.form.category,
+        nextType,
+      );
 
-      this.form.category = this.categoryOptions.includes(normalizedCategory)
+      this.form.category = this.categories.includes(normalizedCategory)
         ? normalizedCategory
-        : ''
-      this.errors.category = ''
+        : "";
+      this.errors.category = "";
     },
 
     async fetchTransaction() {
@@ -189,12 +196,15 @@ export default {
         const txnSnap = await getDoc(txnRef);
 
         if (txnSnap.exists()) {
-          const data = txnSnap.data()
-          this.form.type = this.normalizeType(data.type)
-          this.form.amount = data.amount || ''
-          this.form.category = this.normalizeCategory(data.category, this.form.type)
-          this.form.merchant = data.merchant || ''
-          this.form.note = data.note || ''
+          const data = txnSnap.data();
+          this.form.type = this.normalizeType(data.type);
+          this.form.amount = data.amount || "";
+          this.form.category = this.normalizeCategory(
+            data.category,
+            this.form.type,
+          );
+          this.form.merchant = data.merchant || "";
+          this.form.note = data.note || "";
 
           // Convert Firestore Timestamp to yyyy-mm-dd for the date input
           if (data.date) {
@@ -217,8 +227,11 @@ export default {
       if (!this.form.amount || Number(this.form.amount) <= 0) {
         this.errors.amount = "Amount must be greater than 0.";
       }
-      if (!this.form.category || !this.categoryOptions.includes(this.form.category)) {
-        this.errors.category = 'Please select a valid category.'
+      if (
+        !this.form.category ||
+        !this.categories.includes(this.form.category)
+      ) {
+        this.errors.category = "Please select a valid category.";
       }
       if (!this.form.dateStr) {
         this.errors.date = "Please select a date.";
@@ -258,10 +271,20 @@ export default {
     const categoriesStore = useCategoriesStore();
     return { store, authStore, categoriesStore };
   },
-  async mounted() {
-    if (this.authStore.currentUserId) {
-      await this.categoriesStore.fetchCategories(this.authStore.currentUserId);
-    }
+  watch: {
+    "authStore.currentUserId": {
+      immediate: true,
+      async handler(userId) {
+        if (userId) {
+          await this.categoriesStore.fetchCategories(userId);
+        }
+      },
+    },
+    "form.type"() {
+      if (!this.categories.includes(this.form.category)) {
+        this.form.category = "";
+      }
+    },
   },
 };
 </script>
