@@ -5,18 +5,37 @@
     </header>
 
     <main class="page-content">
+      <!-- Timeframe Selector -->
+      <div class="period-selector timeframe-selector">
+        <button
+          class="period-btn"
+          :class="{ active: selectedTimeframe === 'week' }"
+          @click="setTimeframe('week')"
+        >Week</button>
+        <button
+          class="period-btn"
+          :class="{ active: selectedTimeframe === 'month' }"
+          @click="setTimeframe('month')"
+        >Month</button>
+        <button
+          class="period-btn"
+          :class="{ active: selectedTimeframe === 'year' }"
+          @click="setTimeframe('year')"
+        >Year</button>
+      </div>
+
       <!-- Period Selector -->
       <div class="period-selector">
         <button
           class="period-btn"
-          :class="{ active: selectedPeriod === 'this-month' }"
-          @click="selectedPeriod = 'this-month'"
-        >This month</button>
+          :class="{ active: selectedPeriod === 'current' }"
+          @click="selectedPeriod = 'current'"
+        >{{ periodLabels.current }}</button>
         <button
           class="period-btn"
-          :class="{ active: selectedPeriod === 'last-month' }"
-          @click="selectedPeriod = 'last-month'"
-        >Last month</button>
+          :class="{ active: selectedPeriod === 'previous' }"
+          @click="selectedPeriod = 'previous'"
+        >{{ periodLabels.previous }}</button>
       </div>
 
       <!-- Loading State -->
@@ -36,7 +55,7 @@
           </div>
 
           <!-- Total Income Card -->
-          <div class="metric-card income-card">
+          <div class="metric-card income-card clickable" @click="$router.push('/transactions?tab=income')">
             <div class="metric-label">Total Income</div>
             <div class="metric-value income">
               +${{ formatNumber(periodIncome) }}
@@ -45,7 +64,7 @@
           </div>
 
           <!-- Total Expenses Card -->
-          <div class="metric-card expense-card">
+          <div class="metric-card expense-card clickable" @click="$router.push('/transactions?tab=expense')">
             <div class="metric-label">Total Expenses</div>
             <div class="metric-value expense">
               −${{ formatNumber(periodExpenses) }}
@@ -157,7 +176,8 @@ export default {
 
   data() {
     return {
-      selectedPeriod: 'this-month'
+      selectedTimeframe: 'month',
+      selectedPeriod: 'current'
     }
   },
 
@@ -166,21 +186,57 @@ export default {
       return this.store.transactions.slice(0, 5)
     },
 
-    periodDates() {
-      const now = new Date()
-      if (this.selectedPeriod === 'this-month') {
-        return { year: now.getFullYear(), month: now.getMonth() }
+    periodLabels() {
+      const labels = {
+        week: { current: 'This week', previous: 'Last week' },
+        month: { current: 'This month', previous: 'Last month' },
+        year: { current: 'This year', previous: 'Last year' }
       }
-      const d = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      return { year: d.getFullYear(), month: d.getMonth() }
+      return labels[this.selectedTimeframe]
+    },
+
+    periodRange() {
+      const now = new Date()
+      const isCurrent = this.selectedPeriod === 'current'
+
+      if (this.selectedTimeframe === 'week') {
+        const currentWeekStart = this.startOfWeek(now)
+        const start = new Date(currentWeekStart)
+        start.setDate(currentWeekStart.getDate() + (isCurrent ? 0 : -7))
+
+        const end = new Date(start)
+        end.setDate(start.getDate() + 6)
+
+        return {
+          start: this.startOfDay(start),
+          end: this.endOfDay(end)
+        }
+      }
+
+      if (this.selectedTimeframe === 'year') {
+        const year = now.getFullYear() - (isCurrent ? 0 : 1)
+        return {
+          start: new Date(year, 0, 1, 0, 0, 0, 0),
+          end: new Date(year, 11, 31, 23, 59, 59, 999)
+        }
+      }
+
+      const monthOffset = isCurrent ? 0 : -1
+      const start = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1)
+      const end = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 0)
+
+      return {
+        start: this.startOfDay(start),
+        end: this.endOfDay(end)
+      }
     },
 
     periodTransactions() {
-      const { year, month } = this.periodDates
+      const { start, end } = this.periodRange
       return this.store.transactions.filter(t => {
         const d = this.getTransactionDate(t)
         if (!d) return false
-        return d.getFullYear() === year && d.getMonth() === month
+        return d >= start && d <= end
       })
     },
 
@@ -223,6 +279,11 @@ export default {
   },
 
   methods: {
+    setTimeframe(timeframe) {
+      this.selectedTimeframe = timeframe
+      this.selectedPeriod = 'current'
+    },
+
     formatCurrency(amount) {
       if (amount < 0) {
         return `−$${Math.abs(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
@@ -255,6 +316,26 @@ export default {
       return null
     },
 
+    startOfDay(date) {
+      const d = new Date(date)
+      d.setHours(0, 0, 0, 0)
+      return d
+    },
+
+    endOfDay(date) {
+      const d = new Date(date)
+      d.setHours(23, 59, 59, 999)
+      return d
+    },
+
+    startOfWeek(date) {
+      const d = this.startOfDay(date)
+      const day = d.getDay()
+      const diff = day === 0 ? -6 : 1 - day
+      d.setDate(d.getDate() + diff)
+      return d
+    },
+
     statusClass(status) {
       if (status === 'Exceeded') return 'status-exceeded'
       if (status === 'At risk') return 'status-at-risk'
@@ -263,7 +344,7 @@ export default {
 
     barWidth(actual, target) {
       if (!target || target <= 0) return '0%'
-      const pct = Math.min((actual / target) * 100, 100)
+      const pct = Math.max(0, Math.min((actual / target) * 100, 100))
       return `${pct.toFixed(1)}%`
     }
   }
@@ -346,6 +427,16 @@ export default {
 .metric-card.income-card {
   border-left-color: var(--income);
   background: linear-gradient(135deg, rgba(45, 138, 79, 0.05), rgba(45, 138, 79, 0.02));
+}
+
+.metric-card.clickable {
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.metric-card.clickable:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
 .metric-card.expense-card {
@@ -555,6 +646,10 @@ export default {
   margin-bottom: 20px;
 }
 
+.timeframe-selector {
+  margin-bottom: 12px;
+}
+
 .period-btn {
   padding: 8px 20px;
   border-radius: 20px;
@@ -683,7 +778,7 @@ export default {
 }
 
 .goal-progress-bar.status-on-track {
-  background: var(--income);
+  background: green;
 }
 
 .goal-progress-bar.status-at-risk {

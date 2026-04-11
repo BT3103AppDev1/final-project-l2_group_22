@@ -37,9 +37,8 @@ export const useGoalStore = defineStore('goals', {
 },
 
     /**
-     * Computes the actual spending for a goal given an array of transactions.
-     * For 'Monthly Total Spending Cap': sums all expense transactions.
-     * For 'Monthly Category Spending Cap': sums expense transactions for that category.
+     * Computes the current amount toward a goal given an array of transactions.
+     * Spending caps measure expenses, while savings targets measure net savings.
      */
     goalActual: (state) => (goal, transactions) => {
       if (goal.type === 'Monthly Total Spending Cap') {
@@ -50,6 +49,15 @@ export const useGoalStore = defineStore('goals', {
         return transactions
           .filter(t => t.type === 'expense' && t.category === goal.category)
           .reduce((sum, t) => sum + (t.amount || 0), 0);
+      } else if (goal.type === 'Monthly Savings Target') {
+        const income = transactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+        const expenses = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+        return Math.max(income - expenses, 0);
       }
       return 0;
     },

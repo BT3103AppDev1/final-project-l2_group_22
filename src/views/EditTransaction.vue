@@ -30,21 +30,15 @@
         <div class="type-toggle">
           <button
             class="toggle-btn"
-            :class="{
-              active: form.type === 'expense',
-              expense: form.type === 'expense',
-            }"
-            @click="form.type = 'expense'"
+            :class="{ active: form.type === 'expense', expense: form.type === 'expense' }"
+            @click="handleTypeChange('expense')"
           >
             Expense
           </button>
           <button
             class="toggle-btn"
-            :class="{
-              active: form.type === 'income',
-              income: form.type === 'income',
-            }"
-            @click="form.type = 'income'"
+            :class="{ active: form.type === 'income', income: form.type === 'income' }"
+            @click="handleTypeChange('income')"
           >
             Income
           </button>
@@ -80,9 +74,7 @@
           :class="{ 'input-error': errors.category }"
         >
           <option value="" disabled>Select a category</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">
-            {{ cat }}
-          </option>
+          <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
         </select>
         <span v-if="errors.category" class="error-msg">{{
           errors.category
@@ -126,7 +118,6 @@
 <script>
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase";
-import { ED } from "@/services/editDelete";
 import { useTransactionsStore } from "@/stores/transactions";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useCategoriesStore } from "@/stores/categories";
@@ -146,15 +137,13 @@ export default {
         merchant: "",
         note: "",
       },
-      errors: {},
-    };
+      errors: {}
+    }
   },
   computed: {
-    categories() {
-      return this.categoriesStore.categories
-        .filter((c) => c.type === this.form.type)
-        .map((c) => c.name);
-    },
+    categoryOptions() {
+      return this.form.type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
+    }
   },
   async created() {
     await this.fetchTransaction();
@@ -167,6 +156,32 @@ export default {
     },
   },
   methods: {
+    normalizeType(type) {
+      return String(type).toLowerCase() === 'income' ? 'income' : 'expense'
+    },
+
+    normalizeCategory(category, type = this.form.type) {
+      const raw = String(category || '').trim()
+      if (!raw) return ''
+
+      if (raw === 'Transport') return 'Transportation'
+      if (raw === 'Other') return type === 'income' ? 'Other Income' : 'Other Expense'
+
+      return raw
+    },
+
+    handleTypeChange(nextType) {
+      if (this.form.type === nextType) return
+
+      this.form.type = nextType
+      const normalizedCategory = this.normalizeCategory(this.form.category, nextType)
+
+      this.form.category = this.categoryOptions.includes(normalizedCategory)
+        ? normalizedCategory
+        : ''
+      this.errors.category = ''
+    },
+
     async fetchTransaction() {
       const txnId = this.$route.params.id;
       try {
@@ -174,13 +189,14 @@ export default {
         const txnSnap = await getDoc(txnRef);
 
         if (txnSnap.exists()) {
-          const data = txnSnap.data();
-          this.form.type = data.type || "expense";
-          this.form.amount = data.amount || "";
-          this.form.category = data.category || "";
-          this.form.merchant = data.merchant || "";
-          this.form.note = data.note || "";
+          const data = txnSnap.data()
+          this.form.type = this.normalizeType(data.type)
+          this.form.amount = data.amount || ''
+          this.form.category = this.normalizeCategory(data.category, this.form.type)
+          this.form.merchant = data.merchant || ''
+          this.form.note = data.note || ''
 
+          // Convert Firestore Timestamp to yyyy-mm-dd for the date input
           if (data.date) {
             const date = data.date.toDate
               ? data.date.toDate()
@@ -201,8 +217,8 @@ export default {
       if (!this.form.amount || Number(this.form.amount) <= 0) {
         this.errors.amount = "Amount must be greater than 0.";
       }
-      if (!this.form.category) {
-        this.errors.category = "Please select a category.";
+      if (!this.form.category || !this.categoryOptions.includes(this.form.category)) {
+        this.errors.category = 'Please select a valid category.'
       }
       if (!this.form.dateStr) {
         this.errors.date = "Please select a date.";
@@ -220,13 +236,13 @@ export default {
         const updatedData = {
           type: this.form.type,
           amount: Number(this.form.amount),
-          category: this.form.category,
+          category: this.normalizeCategory(this.form.category, this.form.type),
           date: Timestamp.fromDate(new Date(this.form.dateStr)),
           merchant: this.form.merchant || "",
           note: this.form.note || "",
         };
 
-        await ED.updateTransaction(txnId, updatedData);
+        await this.store.updateTransaction(txnId, updatedData);
         this.$router.push(`/transactions/${txnId}`);
       } catch (err) {
         console.error("Error updating transaction:", err);

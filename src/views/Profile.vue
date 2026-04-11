@@ -23,6 +23,14 @@
           <span class="action-arrow">&rsaquo;</span>
         </button>
 
+        <button class="action-item" @click="$router.push('/reset-password')">
+          <div class="action-copy">
+            <p class="action-title">Reset Password</p>
+            <p class="action-subtext">Send a password reset link to your email</p>
+          </div>
+          <span class="action-arrow">&rsaquo;</span>
+        </button>
+
         <button class="action-item action-item--danger" @click="handleLogout">
           <div class="action-copy">
             <p class="action-title">Log Out</p>

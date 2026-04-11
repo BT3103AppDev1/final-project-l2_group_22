@@ -47,7 +47,7 @@ import BottomNav from "@/components/BottomNav.vue"
 import TransactionItem from "@/components/TransactionItem.vue"
 import EmptyState from "@/components/EmptyState.vue"
 import { useTransactionsStore } from "@/stores/transactions"
-import { useAuthStore } from "@/stores/AuthStore" 
+import { useAuthStore } from "@/stores/AuthStore"
 
 export default {
     name: "Transactions",
@@ -64,6 +64,14 @@ export default {
     computed: {
         filteredTransactions() {
             return this.store.transactions.filter(t => t.type === this.activeTab)
+        }
+    },
+    watch: {
+        'authStore.currentUserId': {
+            immediate: true,
+            handler(userId) {
+                this.store.fetchTransactions(userId)
+            }
         }
     },
     mounted() {

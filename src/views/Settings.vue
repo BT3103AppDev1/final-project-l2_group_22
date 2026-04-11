@@ -113,48 +113,6 @@
 
                 </button>
 
-
-
-                <button class="menu-item">
-
-                    <div class="menu-left">
-
-                        <div class="menu-icon-circle">
-
-                            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-
-                                <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-
-                                <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-
-                                <path d="M8 11v-4a4 4 0 1 1 8 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-
-                            </svg>
-
-                        </div>
-
-
-
-                        <div class="menu-text">
-
-                            <p class="menu-title">Security</p>
-
-                            <p class="menu-subtext">Password and authentication</p>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-
-                        <path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-
-                    </svg>
-
-                </button>
-
             </div>
 
             
