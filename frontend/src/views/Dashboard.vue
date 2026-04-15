@@ -89,8 +89,8 @@
 
           <div v-else class="goal-progress-list">
             <div
-              v-for="gp in goalProgress"
-              :key="gp.goal.id"
+              v-for="(gp, index) in goalProgress"
+              :key="gp.goal.id || `${gp.goal.type}-${gp.goal.category || 'all'}-${index}`"
               class="goal-progress-card"
             >
               <div class="goal-progress-header">
@@ -102,7 +102,7 @@
                 <div
                   class="goal-progress-bar"
                   :class="statusClass(gp.status)"
-                  :style="{ width: barWidth(gp.actual, gp.goal.targetAmount) }"
+                  :style="{ width: gp.progressWidth }"
                 ></div>
               </div>
 
@@ -266,9 +266,12 @@ export default {
 
     goalProgress() {
       return this.goalStore.formattedGoals.map(goal => {
-        const actual = this.goalStore.goalActual(goal, this.periodTransactions)
-        const status = this.goalStore.goalStatus(actual, goal.targetAmount)
-        return { goal, actual, status }
+        const actual = this.toSafeNumber(this.goalStore.goalActual(goal, this.periodTransactions))
+        const target = this.toSafeNumber(goal.targetAmount)
+        const status = this.goalStatus(actual, target)
+        const progressWidth = this.barWidth(actual, target)
+
+        return { goal, actual, target, status, progressWidth }
       })
     }
   },
@@ -342,9 +345,37 @@ export default {
       return 'status-on-track'
     },
 
+    goalStatus(actual, target) {
+      if (target <= 0) return 'On track'
+      if (actual > target) return 'Exceeded'
+      if (actual >= target * 0.8) return 'At risk'
+      return 'On track'
+    },
+
+    toSafeNumber(value) {
+      if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : 0
+      }
+
+      if (typeof value === 'string') {
+        const normalized = value.replace(/[$,\s]/g, '')
+        const parsed = Number(normalized)
+        return Number.isFinite(parsed) ? parsed : 0
+      }
+
+      return 0
+    },
+
     barWidth(actual, target) {
-      if (!target || target <= 0) return '0%'
-      const pct = Math.max(0, Math.min((actual / target) * 100, 100))
+      const safeActual = this.toSafeNumber(actual)
+      const safeTarget = this.toSafeNumber(target)
+
+      if (safeTarget <= 0) return '0%'
+
+      const ratio = (safeActual / safeTarget) * 100
+      if (!Number.isFinite(ratio)) return '0%'
+
+      const pct = Math.max(0, Math.min(ratio, 100))
       return `${pct.toFixed(1)}%`
     }
   }

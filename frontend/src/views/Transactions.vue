@@ -23,6 +23,14 @@
                     <span class="action-icon">↕</span>
                     <span class="action-text">{{ sortDirection === 'desc' ? 'Newest First' : 'Oldest First' }}</span>
                 </button>
+                <button
+                    class="header-action-btn danger-trigger"
+                    title="Delete transactions by time period"
+                    @click="openWipeModal"
+                >
+                    <span class="action-icon">🗑</span>
+                    <span class="action-text">Wipe by Time</span>
+                </button>
             </div>
         </header>
 
@@ -56,6 +64,63 @@
             <button class="fab" @click="$router.push(`/transactions/add?type=${activeTab}`)">+</button>
         </main>
 
+        <div v-if="showWipeModal" class="modal-overlay" @click.self="closeWipeModal">
+            <div class="wipe-modal" role="dialog" aria-modal="true" aria-label="Wipe transactions by period">
+                <h3>Wipe Transactions</h3>
+                <p class="wipe-note">
+                    Select a time period to delete transactions. This action cannot be undone.
+                </p>
+
+                <div class="wipe-form-group">
+                    <label for="wipe-range">Time period</label>
+                    <select id="wipe-range" v-model="wipeScope">
+                        <option value="this_month">This month</option>
+                        <option value="this_year">This year</option>
+                        <option value="last_30_days">Last 30 days</option>
+                        <option value="custom">Custom range</option>
+                        <option value="all_time">All time</option>
+                    </select>
+                </div>
+
+                <div class="wipe-form-group">
+                    <label for="wipe-type">Transaction type</label>
+                    <select id="wipe-type" v-model="wipeType">
+                        <option value="expense">Expenses only</option>
+                        <option value="income">Income only</option>
+                    </select>
+                </div>
+
+                <div v-if="wipeScope === 'custom'" class="custom-range-grid">
+                    <div class="wipe-form-group">
+                        <label for="wipe-start">Start date</label>
+                        <input id="wipe-start" v-model="customStartDate" type="date" />
+                    </div>
+                    <div class="wipe-form-group">
+                        <label for="wipe-end">End date</label>
+                        <input id="wipe-end" v-model="customEndDate" type="date" />
+                    </div>
+                </div>
+
+                <div class="wipe-preview" :class="{ warning: wipeScope === 'all_time' }">
+                    <strong>{{ wipeSummaryLabel }}</strong>
+                    <span>{{ wipePreviewCount }} transaction(s) will be deleted.</span>
+                </div>
+
+                <p v-if="wipeError" class="wipe-error">{{ wipeError }}</p>
+
+                <div class="wipe-actions">
+                    <button class="modal-btn secondary" :disabled="isWiping" @click="closeWipeModal">Cancel</button>
+                    <button
+                        class="modal-btn danger"
+                        :disabled="isWiping || !canWipe"
+                        @click="confirmWipeTransactions"
+                    >
+                        {{ isWiping ? 'Deleting...' : 'Yes, I am sure' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <BottomNav currentTab="transactions" />
     </div>
 </template>
@@ -78,7 +143,14 @@ export default {
         return {
             activeTab: 'expense',
             monthFilterEnabled: false,
-            sortDirection: 'desc'
+            sortDirection: 'desc',
+            showWipeModal: false,
+            wipeScope: 'this_month',
+            customStartDate: '',
+            customEndDate: '',
+            wipeType: 'expense',
+            isWiping: false,
+            wipeError: ''
         }
     },
     computed: {
@@ -102,6 +174,103 @@ export default {
                     const bTime = this.getTransactionDate(b).getTime()
                     return this.sortDirection === 'desc' ? bTime - aTime : aTime - bTime
                 })
+        },
+        currentWipeRange() {
+            const now = new Date()
+            const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
+            const endOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999)
+
+            if (this.wipeScope === 'all_time') {
+                return {
+                    allTime: true,
+                    startDate: null,
+                    endDate: null,
+                    label: 'All time'
+                }
+            }
+
+            if (this.wipeScope === 'this_year') {
+                return {
+                    allTime: false,
+                    startDate: new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0),
+                    endDate: new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999),
+                    label: 'This year'
+                }
+            }
+
+            if (this.wipeScope === 'last_30_days') {
+                const start = new Date(now)
+                start.setDate(start.getDate() - 29)
+                return {
+                    allTime: false,
+                    startDate: startOfDay(start),
+                    endDate: endOfDay(now),
+                    label: 'Last 30 days'
+                }
+            }
+
+            if (this.wipeScope === 'custom') {
+                if (!this.customStartDate || !this.customEndDate) {
+                    return {
+                        allTime: false,
+                        startDate: null,
+                        endDate: null,
+                        label: 'Custom range'
+                    }
+                }
+
+                const start = new Date(this.customStartDate)
+                const end = new Date(this.customEndDate)
+                return {
+                    allTime: false,
+                    startDate: startOfDay(start),
+                    endDate: endOfDay(end),
+                    label: 'Custom range'
+                }
+            }
+
+            return {
+                allTime: false,
+                startDate: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0),
+                endDate: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999),
+                label: 'This month'
+            }
+        },
+        wipePreviewCount() {
+            const userId = this.authStore.currentUserId
+            if (!userId) return 0
+
+            const { allTime, startDate, endDate } = this.currentWipeRange
+            return this.store.transactions.filter(transaction => {
+                if (transaction.userId !== userId) return false
+                if (transaction.type !== this.wipeType) return false
+                if (allTime) return true
+                if (!startDate || !endDate) return false
+
+                const date = this.getTransactionDate(transaction)
+                return date >= startDate && date <= endDate
+            }).length
+        },
+        wipeSummaryLabel() {
+            const typeLabel = this.wipeType === 'expense' ? 'Expenses' : 'Income'
+            return `${this.currentWipeRange.label} selected (${typeLabel})`
+        },
+        canWipe() {
+            if (!this.authStore.currentUserId) {
+                return false
+            }
+
+            if (this.wipeScope === 'custom') {
+                if (!this.customStartDate || !this.customEndDate) {
+                    return false
+                }
+
+                if (new Date(this.customStartDate) > new Date(this.customEndDate)) {
+                    return false
+                }
+            }
+
+            return this.wipePreviewCount > 0
         }
     },
     methods: {
@@ -110,6 +279,44 @@ export default {
         },
         toggleSortDirection() {
             this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc'
+        },
+        openWipeModal() {
+            this.showWipeModal = true
+            this.wipeType = this.activeTab
+            this.wipeError = ''
+        },
+        closeWipeModal(force = false) {
+            if (this.isWiping && !force) {
+                return
+            }
+
+            this.showWipeModal = false
+            this.wipeError = ''
+        },
+        async confirmWipeTransactions() {
+            this.wipeError = ''
+
+            if (!this.canWipe) {
+                this.wipeError = 'Please choose a valid date range with at least one transaction.'
+                return
+            }
+
+            this.isWiping = true
+            try {
+                const { allTime, startDate, endDate } = this.currentWipeRange
+                await this.store.deleteTransactionsByPeriod({
+                    userId: this.authStore.currentUserId,
+                    allTime,
+                    startDate,
+                    endDate,
+                    transactionType: this.wipeType
+                })
+                this.closeWipeModal(true)
+            } catch (error) {
+                this.wipeError = error?.message || 'Failed to wipe transactions. Please try again.'
+            } finally {
+                this.isWiping = false
+            }
         },
         getTransactionDate(transaction) {
             const value = transaction?.date
@@ -226,6 +433,16 @@ html {
     color: var(--text-900);
 }
 
+.header-action-btn.danger-trigger {
+    border-color: #e7c6c6;
+    color: #8d2f2d;
+}
+
+.header-action-btn.danger-trigger:hover {
+    border-color: #d39d9d;
+    background: #fff3f3;
+}
+
 .action-icon {
     font-size: 14px;
     line-height: 1;
@@ -323,5 +540,127 @@ html {
 
 .fab:active {
     transform: scale(0.95);
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(19, 28, 24, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 40;
+}
+
+.wipe-modal {
+    width: min(100%, 460px);
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8e5;
+    box-shadow: 0 12px 28px rgba(23, 34, 29, 0.22);
+    padding: 18px;
+}
+
+.wipe-modal h3 {
+    margin: 0;
+    color: var(--text-900);
+    font-size: 20px;
+}
+
+.wipe-note {
+    margin: 8px 0 0;
+    color: var(--text-700);
+    font-size: 13px;
+}
+
+.wipe-form-group {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wipe-form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #32403b;
+}
+
+.wipe-form-group select,
+.wipe-form-group input {
+    border: 1px solid #d3ddd9;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.custom-range-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.wipe-preview {
+    margin-top: 14px;
+    border: 1px solid #d9e6e1;
+    background: #f4faf7;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: #2f3f39;
+    font-size: 13px;
+}
+
+.wipe-preview.warning {
+    border-color: #eac8c8;
+    background: #fff2f2;
+}
+
+.wipe-error {
+    margin: 10px 0 0;
+    color: #b33a36;
+    font-size: 12px;
+}
+
+.wipe-actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
+
+.modal-btn.secondary {
+    background: #edf1ef;
+    color: #32403b;
+}
+
+.modal-btn.danger {
+    background: #b33a36;
+    color: #ffffff;
+}
+
+.modal-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 680px) {
+    .custom-range-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

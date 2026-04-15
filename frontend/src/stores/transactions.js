@@ -171,6 +171,83 @@ export const useTransactionsStore = defineStore('transactions', {
         this.error = e.message
         throw e
       }
+    },
+
+    async deleteTransactionsByPeriod({ userId, startDate = null, endDate = null, allTime = false, transactionType = null }) {
+      if (firebaseConfigError) {
+        this.error = firebaseConfigError
+        throw new Error(firebaseConfigError)
+      }
+
+      if (!userId) {
+        return 0
+      }
+
+      const resolveDate = (transaction) => {
+        const value = transaction?.date
+        if (value && typeof value.toDate === 'function') {
+          return value.toDate()
+        }
+
+        if (value instanceof Date) {
+          return value
+        }
+
+        const parsed = value ? new Date(value) : null
+        if (parsed && !Number.isNaN(parsed.getTime())) {
+          return parsed
+        }
+
+        return null
+      }
+
+      const inSelectedPeriod = (transaction) => {
+        if (transaction?.userId !== userId) {
+          return false
+        }
+
+        if (transactionType && transaction?.type !== transactionType) {
+          return false
+        }
+
+        if (allTime) {
+          return true
+        }
+
+        const date = resolveDate(transaction)
+        if (!date || !startDate || !endDate) {
+          return false
+        }
+
+        return date >= startDate && date <= endDate
+      }
+
+      const idsToDelete = this.transactions
+        .filter(inSelectedPeriod)
+        .map(t => t.id)
+        .filter(id => Boolean(id) && !String(id).startsWith('_temp_'))
+
+      if (!idsToDelete.length) {
+        return 0
+      }
+
+      const idSet = new Set(idsToDelete)
+      const original = [...this.transactions]
+      this.transactions = this.transactions.filter(t => !idSet.has(t.id))
+
+      try {
+        const deletePromise = Promise.all(idsToDelete.map(id => deleteDoc(doc(db, 'transactions', id))))
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Bulk delete operation timed out after 6 seconds')), 6000)
+        )
+
+        await Promise.race([deletePromise, timeoutPromise])
+        return idsToDelete.length
+      } catch (e) {
+        this.transactions = original
+        this.error = e.message
+        throw e
+      }
     }
   }
 })

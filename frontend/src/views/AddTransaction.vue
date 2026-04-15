@@ -525,8 +525,6 @@ export default {
           merchant: this.merchant.trim(),
           note: this.notes.trim(),
         });
-
-        alert("Transaction saved successfully!");
         this.$router.push(`/transactions?tab=${this.type}`);
       } catch (error) {
         this.saveError = "Failed to save transaction. Please try again.";
