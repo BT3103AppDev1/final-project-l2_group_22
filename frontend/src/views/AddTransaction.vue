@@ -843,7 +843,7 @@ export default {
     0 0 0 1px rgba(217, 83, 79, 0.2);
 }
 
-/* Amount with currency prefix */
+/* Amount with currency suffix */
 .amount-input-wrapper {
   position: relative;
   display: flex;
@@ -853,7 +853,7 @@ export default {
 
 .currency-symbol {
   position: absolute;
-  left: 16px;
+  right: 16px;
   font-size: 18px;
   font-weight: 600;
   color: var(--text-700);
@@ -863,8 +863,20 @@ export default {
 }
 
 .amount-input {
-  padding-left: 40px;
+  padding-left: 16px;
+  padding-right: 44px;
   width: 100%;
+}
+
+.amount-input::-webkit-outer-spin-button,
+.amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.amount-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .amount-input::placeholder {

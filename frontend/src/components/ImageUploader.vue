@@ -568,8 +568,13 @@ const confirmExpense = async () => {
       note: draft.value.note.trim(),
     });
 
+    const savedCategory = saved?.category || draft.value.category || defaultCategory() || 'Other Expense';
+    const savedAmount = Number.isFinite(Number(saved?.amount))
+      ? Number(saved.amount)
+      : Number(draft.value.amount);
+
     saveState.value = 'confirmed';
-    successMsg.value = `Expense saved: ${saved.category} ($${Number(saved.amount).toFixed(2)}).`;
+    successMsg.value = `Expense saved: ${savedCategory} ($${savedAmount.toFixed(2)}).`;
     clearUploadSession();
   } catch (error) {
     console.error('Save error:', error);

@@ -134,9 +134,14 @@ export const useTransactionsStore = defineStore('transactions', {
 
         await Promise.race([batchPromise, timeoutPromise])
 
-        // Fetch the saved transactions to get their IDs
-        // For now, we'll just keep the optimistic data
-        return { success: true, count: recurrenceDates.length }
+        // Return summary plus base transaction fields for callers that show confirmation details.
+        return {
+          success: true,
+          count: recurrenceDates.length,
+          category: baseDocData.category,
+          amount: baseDocData.amount,
+          type: baseDocData.type
+        }
       } catch (e) {
         // Rollback optimistic updates on error
         this.transactions = this.transactions.filter(

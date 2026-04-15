@@ -5,27 +5,34 @@
         class="icon-button"
         type="button"
         aria-label="Go back"
-        @click="$router.back()"
+        @click="goToSettings"
       >
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M15 6l-6 6 6 6" />
         </svg>
       </button>
       <h1>Categories</h1>
-      <button
-        class="icon-button"
-        type="button"
-        aria-label="Add category"
-        @click="goToAddCategory"
-      >
-        <svg viewBox="0 0 24 24" fill="none">
-          <path d="M12 5v14" />
-          <path d="M5 12h14" />
-        </svg>
-      </button>
+      <div class="header-spacer" aria-hidden="true"></div>
     </header>
 
     <main class="page-content">
+      <div class="add-category-actions">
+        <button
+          class="add-category-btn add-category-btn--expense"
+          type="button"
+          @click="goToAddCategory('expense')"
+        >
+          + Add Expense Category
+        </button>
+        <button
+          class="add-category-btn add-category-btn--income"
+          type="button"
+          @click="goToAddCategory('income')"
+        >
+          + Add Income Category
+        </button>
+      </div>
+
       <p v-if="categoriesStore.loading" class="status-message">
         Loading categories...
       </p>
@@ -75,19 +82,6 @@
       </section>
     </main>
     <BottomNav currentTab="settings" />
-
-    <!-- Green add button on the bottom right corner, redirects to AddCategories.vue -->
-    <button
-      class="fab"
-      type="button"
-      aria-label="Add category"
-      @click="goToAddCategory"
-    >
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M12 5v14" />
-        <path d="M5 12h14" />
-      </svg>
-    </button>
   </div>
 </template>
 
@@ -174,8 +168,11 @@ export default {
     goToAddTransaction() {
       this.$router.push("/add-transaction");
     },
-    goToAddCategory() {
-      this.$router.push("/add-category");
+    goToAddCategory(type = "expense") {
+      this.$router.push({ path: "/add-category", query: { type } });
+    },
+    goToSettings() {
+      this.$router.push("/settings");
     },
     goToEditCategory(categoryId) {
       if (!categoryId) {
@@ -211,6 +208,11 @@ export default {
   background: rgba(255, 255, 255, 0.96);
   border-bottom: 1px solid rgba(31, 41, 55, 0.06);
   backdrop-filter: blur(10px);
+}
+
+.header-spacer {
+  width: 36px;
+  height: 36px;
 }
 
 .page-header h1 {
@@ -250,6 +252,37 @@ export default {
   width: min(100%, 460px);
   margin: 0 auto;
   padding: 18px 16px 32px;
+}
+
+.add-category-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 14px;
+}
+
+.add-category-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
+}
+
+.add-category-btn--expense {
+  background: #fde8e8;
+  color: #9c2d2d;
+}
+
+.add-category-btn--income {
+  background: #e6f4ed;
+  color: #20603a;
 }
 
 .status-message {
@@ -350,30 +383,9 @@ export default {
   color: #c0c7d2;
 }
 
-.fab {
-  position: fixed;
-  right: 20px;
-  bottom: calc(58px + env(safe-area-inset-bottom) + 18px);
-  width: 58px;
-  height: 58px;
-  border: none;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6da08f, #4a6e5e);
-  color: #fff;
-  box-shadow: 0 14px 28px rgba(74, 110, 94, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
 @media (min-width: 768px) {
   .categories-page {
     padding-bottom: 40px;
-  }
-
-  .fab {
-    right: calc(50% - 260px);
   }
 }
 </style>

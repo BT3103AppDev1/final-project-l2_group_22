@@ -176,7 +176,7 @@ export default {
       if (!validation.isValid) {
         this.errors = validation.errors;
         console.log("Validation errors:", this.errors);
-        alert("Validation error: " + this.errors.category);
+        this.saveError = this.errors.category || "Please check the form and try again.";
         return;
       }
 
@@ -189,8 +189,7 @@ export default {
           userId: this.authStore.currentUserId,
         });
 
-        alert("New category saved successfully!");
-        this.goBack(); // Redirect back to categories page after sucessfully saving
+        this.$router.push(`/settings/categories`);
       } catch (error) {
         this.saveError = "Failed to save category name. Please try again.";
         console.error("Save error:", error);
