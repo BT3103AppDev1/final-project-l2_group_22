@@ -3,7 +3,7 @@ Follow this simple guide to run this application:
 # Backend:
 
 - Install anaconda3
-- Create a new environment: conda create -n cashsight python=3.10 -y
+- Create a new environment: `conda create -n cashsight python=3.10 -y`
 - Install dependencies:
     - `conda activate cashsight`
     - `cd backend\receipt-ocr`
