@@ -58,7 +58,7 @@
           <div class="metric-card income-card clickable" @click="$router.push('/transactions?tab=income')">
             <div class="metric-label">Total Income</div>
             <div class="metric-value income">
-              +${{ formatNumber(periodIncome) }}
+              {{ formatSignedAmount(periodIncome, 'income') }}
             </div>
             <div class="metric-subtext">{{ periodIncomeCount }} transaction(s)</div>
           </div>
@@ -67,7 +67,7 @@
           <div class="metric-card expense-card clickable" @click="$router.push('/transactions?tab=expense')">
             <div class="metric-label">Total Expenses</div>
             <div class="metric-value expense">
-              −${{ formatNumber(periodExpenses) }}
+              {{ formatSignedAmount(periodExpenses, 'expense') }}
             </div>
             <div class="metric-subtext">{{ periodExpenseCount }} transaction(s)</div>
           </div>
@@ -107,8 +107,8 @@
               </div>
 
               <div class="goal-progress-amounts">
-                <span class="goal-actual">Actual: ${{ formatNumber(gp.actual) }}</span>
-                <span class="goal-target">Target: ${{ formatNumber(gp.goal.targetAmount) }}</span>
+                <span class="goal-actual">Actual: {{ formatAmount(gp.actual) }}</span>
+                <span class="goal-target">Target: {{ formatAmount(gp.goal.targetAmount) }}</span>
               </div>
             </div>
           </div>
@@ -143,7 +143,7 @@
                 </div>
               </div>
               <div class="recent-amount" :class="transaction.type">
-                {{ transaction.type === 'expense' ? '−' : '+' }}${{ formatNumber(transaction.amount) }}
+                {{ formatSignedAmount(transaction.amount, transaction.type) }}
               </div>
             </div>
           </div>
@@ -160,6 +160,7 @@ import BottomNav from "@/components/BottomNav.vue"
 import { useTransactionsStore } from "@/stores/transactions"
 import { useAuthStore } from "@/stores/AuthStore"
 import { useGoalStore } from "@/stores/GoalStore"
+import { useCurrencyStore } from "@/stores/currency"
 
 export default {
   name: "Dashboard",
@@ -171,7 +172,8 @@ export default {
     const store = useTransactionsStore()
     const authStore = useAuthStore()
     const goalStore = useGoalStore()
-    return { store, authStore, goalStore }
+    const currencyStore = useCurrencyStore()
+    return { store, authStore, goalStore, currencyStore }
   },
 
   data() {
@@ -265,23 +267,29 @@ export default {
     },
 
     goalProgress() {
-      return this.goalStore.formattedGoals.map((goal, idx) => {
+      return this.goalStore.formattedGoals.map((goal) => {
         const rawActual = this.goalStore.goalActual(goal, this.periodTransactions)
         const actual = this.toSafeNumber(rawActual)
         const target = this.toSafeNumber(goal.targetAmount)
         const isSavingsGoal = goal.type === 'Monthly Savings Target'
         const status = this.goalStatus(actual, target, isSavingsGoal)
         const statusClass = this.goalStatusClass(status, isSavingsGoal)
-        const progressWidth = this.barWidth(actual, target, status)
+        const progressWidth = this.barWidth(actual, target)
 
         return { goal, actual, target, status, statusClass, progressWidth }
       })
     }
   },
 
-  mounted() {
-    this.store.fetchTransactions(this.authStore.currentUserId)
-    this.goalStore.init(this.authStore.currentUserId)
+  watch: {
+    'authStore.currentUserId': {
+      immediate: true,
+      handler(userId) {
+        this.store.fetchTransactions(userId)
+        this.goalStore.init(userId)
+        this.currencyStore.init(userId)
+      }
+    }
   },
 
   methods: {
@@ -291,14 +299,24 @@ export default {
     },
 
     formatCurrency(amount) {
-      if (amount < 0) {
-        return `−$${Math.abs(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-      }
-      return `+$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+      return this.currencyStore.formatSignedValue(amount, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
     },
 
-    formatNumber(amount) {
-      return Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })
+    formatAmount(amount) {
+      return this.currencyStore.formatAmount(amount, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    },
+
+    formatSignedAmount(amount, type) {
+      return this.currencyStore.formatSignedAmount(amount, type, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
     },
 
     formatDate(date) {
@@ -380,8 +398,8 @@ export default {
       return 0
     },
 
-    barWidth(actual, target, status) {
-      const safeActual = Math.abs(this.toSafeNumber(actual)) 
+    barWidth(actual, target) {
+      const safeActual = Math.abs(this.toSafeNumber(actual))
       const safeTarget = Math.abs(this.toSafeNumber(target))
 
       if (safeTarget <= 0) return '0%'
@@ -390,7 +408,7 @@ export default {
       if (!Number.isFinite(ratio)) return '0%'
 
       const pct = Math.max(0, Math.min(ratio, 100))
-      const widthPercent = Math.round(pct * 10) / 10 
+      const widthPercent = Math.round(pct * 10) / 10
       return `${widthPercent}%`
     }
   }

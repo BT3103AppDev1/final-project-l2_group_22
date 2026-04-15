@@ -30,7 +30,7 @@
           <div class="goal-info">
             <p class="goal-label">{{ goal.displayName }}</p>
             <h3 class="target-amount">
-              ${{ goal.targetAmount.toLocaleString() }}
+              {{ formatGoalAmount(goal.targetAmount) }}
             </h3>
           </div>
 
@@ -108,7 +108,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Target Amount ($)</label>
+            <label class="form-label">Target Amount ({{ currencyStore.selectedCurrency }})</label>
             <input
               v-model.number="goalForm.targetAmount"
               type="number"
@@ -197,11 +197,13 @@ import BottomNav from "@/components/BottomNav.vue";
 import { useGoalStore } from "../stores/GoalStore";
 import { useAuthStore } from "../stores/AuthStore";
 import { useCategoriesStore } from "../stores/categories";
+import { useCurrencyStore } from "../stores/currency";
 import { EXPENSE_CATEGORIES } from "../constants/categories";
 
 const goalStore = useGoalStore();
 const authStore = useAuthStore();
 const categoriesStore = useCategoriesStore();
+const currencyStore = useCurrencyStore();
 const showOverrideConfirm = ref(false);
 const duplicateGoalId = ref(null);
 
@@ -229,6 +231,7 @@ onMounted(async () => {
     await Promise.all([
       goalStore.init(authStore.currentUserId),
       categoriesStore.fetchCategories(authStore.currentUserId),
+      currencyStore.init(authStore.currentUserId),
     ]);
   }
 });
@@ -240,6 +243,7 @@ watch(
       await Promise.all([
         goalStore.init(newUserId),
         categoriesStore.fetchCategories(newUserId),
+        currencyStore.init(newUserId),
       ]);
     } else {
       goalStore.cleanup();
@@ -256,8 +260,18 @@ watch(
 
 const openDetails = (goal) => {
   selectedGoal.value = goal;
-  Object.assign(goalForm, goal);
+  Object.assign(goalForm, {
+    ...goal,
+    targetAmount: Number(currencyStore.convertFromBase(goal.targetAmount).toFixed(2)),
+  });
   isEditing.value = true;
+};
+
+const formatGoalAmount = (amount) => {
+  return currencyStore.formatAmount(amount, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 const confirmDelete = (goal) => {
@@ -307,7 +321,12 @@ const executeSave = async (id = null) => {
 
     // Clean data for Firestore (remove any local IDs from the form object)
     const { id: _, ...cleanData } = goalForm;
-    const data = { ...cleanData, userId: authStore.currentUserId };
+    const baseTargetAmount = Number(currencyStore.convertToBase(cleanData.targetAmount).toFixed(2));
+    const data = {
+      ...cleanData,
+      targetAmount: baseTargetAmount,
+      userId: authStore.currentUserId,
+    };
 
     console.log(
       "[Goals] Saving goal with userId:",

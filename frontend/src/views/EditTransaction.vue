@@ -57,7 +57,7 @@
           class="input-with-prefix"
           :class="{ 'input-error': errors.amount }"
         >
-          <span class="prefix">$</span>
+          <span class="prefix">{{ currencyStore.currencySymbol }}</span>
           <input
             v-model="form.amount"
             type="number"
@@ -179,6 +179,7 @@ import { db } from "@/firebase";
 import { useTransactionsStore } from "@/stores/transactions";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useCategoriesStore } from "@/stores/categories";
+import { useCurrencyStore } from "@/stores/currency";
 
 export default {
   name: "EditTransaction",
@@ -209,6 +210,7 @@ export default {
     },
   },
   async created() {
+    await this.currencyStore.init(this.authStore.currentUserId);
     await this.fetchTransaction();
   },
   methods: {
@@ -271,7 +273,7 @@ export default {
         if (txnSnap.exists()) {
           const data = txnSnap.data();
           this.form.type = this.normalizeType(data.type);
-          this.form.amount = data.amount || "";
+          this.form.amount = Number(this.currencyStore.convertFromBase(data.amount || 0).toFixed(2));
           this.form.category = this.normalizeCategory(
             data.category,
             this.form.type,
@@ -330,9 +332,10 @@ export default {
       this.saving = true;
       try {
         const txnId = this.$route.params.id;
+        const baseAmount = this.currencyStore.convertToBase(this.form.amount);
         const updatedData = {
           type: this.form.type,
-          amount: Number(this.form.amount),
+          amount: Number(baseAmount.toFixed(2)),
           category: this.normalizeCategory(this.form.category, this.form.type),
           date: Timestamp.fromDate(new Date(this.form.dateStr)),
           merchant: this.form.merchant || "",
@@ -361,14 +364,18 @@ export default {
     const store = useTransactionsStore();
     const authStore = useAuthStore();
     const categoriesStore = useCategoriesStore();
-    return { store, authStore, categoriesStore };
+    const currencyStore = useCurrencyStore();
+    return { store, authStore, categoriesStore, currencyStore };
   },
   watch: {
     "authStore.currentUserId": {
       immediate: true,
       async handler(userId) {
         if (userId) {
-          await this.categoriesStore.fetchCategories(userId);
+          await Promise.all([
+            this.categoriesStore.fetchCategories(userId),
+            this.currencyStore.init(userId),
+          ]);
         }
       },
     },

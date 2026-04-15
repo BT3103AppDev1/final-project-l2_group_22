@@ -18,6 +18,8 @@
 </template>
 
 <script>
+import { useCurrencyStore } from '@/stores/currency'
+
 export default {
   name: 'TransactionItem',
   props: {
@@ -28,19 +30,35 @@ export default {
   },
   computed: {
     formattedDate() {
-      return this.transaction.date.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      const value = this.transaction?.date
+
+      if (value && typeof value.toDate === 'function') {
+        return value.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      }
+
+      const parsed = value ? new Date(value) : null
+      if (parsed && !Number.isNaN(parsed.getTime())) {
+        return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      }
+
+      return ''
     },
     primaryLabel() {
       return this.transaction.merchant || this.transaction.category
     },
     amountDisplay() {
-      const sign = this.transaction.type === 'expense' ? '−' : '+'
-      const formatted = this.transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })
-      return `${sign}$${formatted}`
+      return this.currencyStore.formatSignedAmount(this.transaction.amount, this.transaction.type, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
     },
     amountClass() {
       return this.transaction.type === 'expense' ? 'expense' : 'income'
     }
+  },
+  setup() {
+    const currencyStore = useCurrencyStore()
+    return { currencyStore }
   }
 }
 </script>

@@ -515,6 +515,7 @@ import GoalInsightExplanation from "@/insight/GoalInsightExplanation.vue"
 import { useTransactionsStore } from "@/stores/transactions"
 import { useAuthStore } from "@/stores/AuthStore"
 import { useGoalStore } from "@/stores/GoalStore"
+import { useCurrencyStore } from "@/stores/currency"
 
 const WEEKDAY_LABELS = [
     "Sunday",
@@ -559,7 +560,8 @@ export default {
         const store = useTransactionsStore()
         const authStore = useAuthStore()
         const goalStore = useGoalStore()
-        return { store, authStore, goalStore }
+        const currencyStore = useCurrencyStore()
+        return { store, authStore, goalStore, currencyStore }
     },
     data() {
         return {
@@ -1120,6 +1122,7 @@ export default {
             handler(userId) {
                 this.store.fetchTransactions(userId)
                 this.goalStore.init(userId)
+                this.currencyStore.init(userId)
             }
         }
     },
@@ -1180,19 +1183,23 @@ export default {
             return Number.isFinite(parsed) ? parsed : 0
         },
         formatCurrency(amount) {
-            return `$${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+            return this.currencyStore.formatAmount(amount, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })
         },
         formatSignedCurrency(amount) {
-            if (amount < 0) {
-                return `-$${Math.abs(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-            }
-            return `+$${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+            return this.currencyStore.formatSignedValue(amount, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })
         },
         formatCompactCurrency(amount) {
-            return `$${Number(amount).toLocaleString(undefined, {
+            return this.currencyStore.formatAmount(amount, {
                 notation: "compact",
+                minimumFractionDigits: 0,
                 maximumFractionDigits: 1
-            })}`
+            })
         },
         formatPercent(value) {
             return `${Number(value || 0).toFixed(1)}%`

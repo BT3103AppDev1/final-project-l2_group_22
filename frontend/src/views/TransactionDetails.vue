@@ -33,7 +33,7 @@
           <span class="icon-arrow">{{ transaction.type === 'expense' ? '▼' : '▲' }}</span>
         </div>
         <p class="amount" :class="transaction.type">
-          {{ transaction.type === 'expense' ? '−' : '+' }}${{ Number(transaction.amount).toFixed(2) }}
+          {{ formattedAmount }}
         </p>
         <p class="type-label">{{ (transaction.type || '').toUpperCase() }}</p>
       </div>
@@ -92,7 +92,7 @@
           <div class="modal-detail-row">
             <span>Amount</span>
             <span class="modal-amount" :class="transaction.type">
-              {{ transaction.type === 'expense' ? '−' : '+' }}${{ Number(transaction.amount).toFixed(2) }}
+              {{ formattedAmount }}
             </span>
           </div>
         </div>
@@ -114,6 +114,7 @@
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { useTransactionsStore } from '@/stores/transactions'
+import { useCurrencyStore } from '@/stores/currency'
 
 export default {
   name: 'TransactionDetails',
@@ -148,6 +149,12 @@ export default {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
+      })
+    },
+    formattedAmount() {
+      return this.currencyStore.formatSignedAmount(this.transaction.amount, this.transaction.type, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       })
     }
   },
@@ -193,7 +200,8 @@ export default {
   },
   setup() {
     const store = useTransactionsStore()
-    return { store }
+    const currencyStore = useCurrencyStore()
+    return { store, currencyStore }
   }
 }
 </script>

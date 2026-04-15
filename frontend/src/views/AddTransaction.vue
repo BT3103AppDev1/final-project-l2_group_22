@@ -39,7 +39,7 @@
             >Amount <span class="required">*</span></label
           >
           <div class="amount-input-wrapper">
-            <span class="currency-symbol">$</span>
+            <span class="currency-symbol">{{ currencyStore.currencySymbol }}</span>
             <input
               id="amount"
               type="number"
@@ -290,6 +290,7 @@ import BottomNav from "@/components/BottomNav.vue";
 import { useTransactionsStore } from "@/stores/transactions";
 import { useAuthStore } from "@/stores/AuthStore";
 import { useCategoriesStore } from "@/stores/categories";
+import { useCurrencyStore } from "@/stores/currency";
 
 export default {
   name: "AddTransaction",
@@ -613,9 +614,11 @@ export default {
       this.isLoading = true;
 
       try {
+        const amountInBaseCurrency = this.currencyStore.convertToBase(this.amount);
+
         await this.store.addTransaction({
           type: this.type,
-          amount: this.amount,
+          amount: Number(amountInBaseCurrency.toFixed(2)),
           category: this.category,
           date: this.dateObj,
           userId: this.authStore.currentUserId,
@@ -639,12 +642,25 @@ export default {
     const store = useTransactionsStore();
     const authStore = useAuthStore();
     const categoriesStore = useCategoriesStore();
-    return { store, authStore, categoriesStore };
+    const currencyStore = useCurrencyStore();
+    return { store, authStore, categoriesStore, currencyStore };
   },
   async mounted() {
     if (this.authStore.currentUserId) {
-      await this.categoriesStore.fetchCategories(this.authStore.currentUserId);
+      await Promise.all([
+        this.categoriesStore.fetchCategories(this.authStore.currentUserId),
+        this.currencyStore.init(this.authStore.currentUserId),
+      ]);
     }
+  },
+  watch: {
+    "authStore.currentUserId": {
+      immediate: true,
+      async handler(userId) {
+        if (!userId) return;
+        await this.currencyStore.init(userId);
+      },
+    },
   },
 };
 </script>

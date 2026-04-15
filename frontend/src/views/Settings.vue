@@ -7,6 +7,50 @@
     <main class="page-content">
       <p class="desc">Preferences</p>
       <div class="content settings-group">
+        <div class="menu-item currency-item">
+          <div class="menu-left">
+            <div class="menu-icon-circle">
+              <svg
+                class="menu-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"></circle>
+                <path d="M9 9.5C9 8.6 9.8 8 10.8 8H13.2C14.2 8 15 8.6 15 9.5C15 10.3 14.4 10.8 13.6 11L10.4 11.8C9.6 12 9 12.5 9 13.3C9 14.2 9.8 14.8 10.8 14.8H13.2C14.2 14.8 15 14.2 15 13.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <path d="M12 6.8V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <path d="M12 16V17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+              </svg>
+            </div>
+
+            <div class="menu-text">
+              <p class="menu-title">Display Currency</p>
+              <p class="menu-subtext">{{ exchangeRateText }}</p>
+            </div>
+          </div>
+
+          <div class="currency-controls">
+            <select
+              class="currency-select"
+              :value="currencyStore.selectedCurrency"
+              :disabled="currencyStore.isLoading"
+              @change="handleCurrencyChange($event.target.value)"
+            >
+              <option
+                v-for="currency in currencyStore.supportedCurrencies"
+                :key="currency.code"
+                :value="currency.code"
+              >
+                {{ currency.code }} - {{ currency.label }}
+              </option>
+            </select>
+
+            <button class="refresh-rate-btn" :disabled="currencyStore.isLoading" @click="refreshRate">
+              {{ currencyStore.isLoading ? '...' : 'Refresh' }}
+            </button>
+          </div>
+        </div>
+
         <button class="menu-item" @click="$router.push('/settings/categories')">
           <div class="menu-left">
             <div class="menu-icon-circle">
@@ -325,12 +369,48 @@
 
 <script>
 import BottomNav from "@/components/BottomNav.vue";
+import { useAuthStore } from "@/stores/AuthStore";
+import { useCurrencyStore } from "@/stores/currency";
 
 export default {
   name: "Settings",
 
   components: {
     BottomNav,
+  },
+
+  setup() {
+    const authStore = useAuthStore();
+    const currencyStore = useCurrencyStore();
+    return { authStore, currencyStore };
+  },
+
+  computed: {
+    exchangeRateText() {
+      if (this.currencyStore.error) {
+        return "Rate unavailable. Using last known value.";
+      }
+      return this.currencyStore.exchangeRateLabel;
+    },
+  },
+
+  watch: {
+    "authStore.currentUserId": {
+      immediate: true,
+      handler(userId) {
+        this.currencyStore.init(userId);
+      },
+    },
+  },
+
+  methods: {
+    async handleCurrencyChange(nextCurrency) {
+      await this.currencyStore.setSelectedCurrency(nextCurrency, this.authStore.currentUserId);
+    },
+
+    async refreshRate() {
+      await this.currencyStore.refreshExchangeRate(this.currencyStore.selectedCurrency);
+    },
   },
 };
 </script>
@@ -387,6 +467,44 @@ export default {
   cursor: pointer;
 }
 
+.currency-item {
+  cursor: default;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.currency-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.currency-select {
+  border: 1px solid #d8dde3;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #2f3640;
+  background: #fff;
+}
+
+.refresh-rate-btn {
+  border: 1px solid #d8dde3;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.refresh-rate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .menu-item + .menu-item {
   border-top: 1px solid #ececec;
 }
@@ -438,6 +556,18 @@ export default {
   height: 18px;
   color: #a3aab5;
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .currency-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .currency-controls {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .why-icon,
