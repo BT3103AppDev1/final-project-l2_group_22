@@ -18,3 +18,4 @@ PyYAML>=5.3
 pillow>=12.2.0
 tzdata
 receipt-ocr
+uvicorn
