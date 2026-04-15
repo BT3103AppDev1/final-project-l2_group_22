@@ -70,10 +70,10 @@
         @click.self="closeModal"
       >
         <div class="modal-content">
-          <h2>{{ isEditing ? "Edit Goal" : "Add New Goal" }}</h2>
+          <h2 class="modal-title">{{ isEditing ? "Edit Goal" : "Add New Goal" }}</h2>
 
           <div class="form-group">
-            <label>Goal Type</label>
+            <label class="form-label">Goal Type</label>
             <select
               v-model="goalForm.type"
               :disabled="isEditing"
@@ -95,7 +95,7 @@
             v-if="goalForm.type === 'Monthly Category Spending Cap'"
             class="form-group"
           >
-            <label>Category</label>
+            <label class="form-label">Category</label>
             <select v-model="goalForm.category" class="custom-select">
               <option value="" disabled>Select a category</option>
               <option v-for="cat in categories" :key="cat" :value="cat">
@@ -108,7 +108,7 @@
           </div>
 
           <div class="form-group">
-            <label>Target Amount ($)</label>
+            <label class="form-label">Target Amount ($)</label>
             <input
               v-model.number="goalForm.targetAmount"
               type="number"
@@ -489,6 +489,68 @@ const closeModal = () => {
   border-radius: 20px;
   width: 90%;
   max-width: 400px;
+  font-family: "Poppins", sans-serif;
+}
+
+.modal-title {
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-900);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-900);
+  letter-spacing: 0.2px;
+}
+
+.custom-select,
+.custom-input {
+  border: 1.5px solid #e2e8e0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: "Poppins", sans-serif;
+  color: var(--text-900);
+  background: white;
+  outline: none;
+  transition: all 0.2s;
+  line-height: 1.4;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.custom-select:hover:not(:disabled),
+.custom-input:hover {
+  border-color: #d1dcd8;
+  background: #fafbfa;
+}
+
+.custom-select:focus,
+.custom-input:focus {
+  border-color: var(--brand);
+  box-shadow:
+    0 0 0 4px rgba(94, 148, 134, 0.1),
+    0 0 0 1px rgba(94, 148, 134, 0.2);
+}
+
+.custom-select:disabled {
+  background: #f3f5f4;
+  color: #8a9892;
+  cursor: not-allowed;
+}
+
+.custom-input::placeholder {
+  color: #bcc4c0;
 }
 
 .modal-actions {
@@ -499,6 +561,8 @@ const closeModal = () => {
 
 .modal-actions button {
   flex: 1;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
 }
 
 .btn-primary {

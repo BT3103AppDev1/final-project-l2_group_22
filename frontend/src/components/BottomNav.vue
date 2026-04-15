@@ -3,7 +3,7 @@
         <div class="bottom-nav-spacer" aria-hidden="true"></div>
 
         <nav class="bottom-nav">
-            <!--4 buttons in Nav Bar, with logo and label, colour switch on current tab opened-->
+            <!--5 buttons in Nav Bar, with logo and label, colour switch on current tab opened-->
             <button class="nav-button" :class="{ active: currentTab === 'dashboard'}" @click="$router.push('/dashboard')">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none">
                     <rect x="4" y="4" width="6" height="6" rx="1" />
@@ -11,7 +11,7 @@
                     <rect x="4" y="14" width="6" height="6" rx="1" />
                     <rect x="14" y="14" width="6" height="6" rx="1" />
                 </svg>
-                <span class="nav-label"> Dashboard</span>
+                <span class="nav-label">Dashboard</span>
             </button>
 
             <button class="nav-button" :class="{ active: currentTab === 'transactions'}" @click="$router.push('/transactions')">
@@ -29,6 +29,15 @@
                     <path d="M17 7h3v3" />
                 </svg>
                 <span class="nav-label">Insights</span>
+            </button>
+
+            <button class="nav-button" :class="{ active: currentTab === 'uploader'}" @click="$router.push('/uploader')">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <circle cx="9" cy="10" r="2" />
+                    <path d="M5 17l5-5 3 3 2-2 4 4" />
+                </svg>
+                <span class="nav-label">Upload</span>
             </button>
 
             <button class="nav-button" :class="{ active: currentTab === 'settings'}" @click="$router.push('/settings')">
@@ -65,14 +74,15 @@ export default {
 
 .bottom-nav {
     position: fixed;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(100%, 560px);
     bottom: 0;
     z-index: 20;
     display: flex;
-    justify-content: center;
-    gap: 24px;
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    justify-content: space-between;
+    gap: 2px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     background: #fff;
     border-top: 2px solid darkgray;
     box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
@@ -83,10 +93,15 @@ export default {
     background: transparent;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
     gap: 2px;
     color: #98a2b3;
     cursor: pointer;
+    flex: 1 1 0;
+    max-width: none;
+    min-width: 0;
+    padding: 4px 0;
 }
 
 .nav-icon {
@@ -100,6 +115,9 @@ export default {
 
 .nav-label {
     font-size: 11px;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
 }
 
 .nav-button.active{

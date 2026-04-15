@@ -2,9 +2,27 @@
     <div class="web-page">
         <header class="page-header">
             <h1>Transactions</h1>
-            <div class="header-icons">
-                <button class="icon-button">🔽</button>
-                <button class="icon-button">↕️</button>
+            <div class="header-controls">
+                <button
+                    class="header-action-btn"
+                    :class="{ active: monthFilterEnabled }"
+                    :aria-pressed="monthFilterEnabled"
+                    title="Toggle current month filter"
+                    @click="toggleMonthFilter"
+                >
+                    <span class="action-icon">📅</span>
+                    <span class="action-text">{{ monthFilterEnabled ? 'This Month' : 'All Time' }}</span>
+                </button>
+                <button
+                    class="header-action-btn"
+                    :class="{ active: sortDirection === 'asc' }"
+                    :aria-pressed="sortDirection === 'asc'"
+                    title="Switch between newest and oldest transactions"
+                    @click="toggleSortDirection"
+                >
+                    <span class="action-icon">↕</span>
+                    <span class="action-text">{{ sortDirection === 'desc' ? 'Newest First' : 'Oldest First' }}</span>
+                </button>
             </div>
         </header>
 
@@ -58,12 +76,57 @@ export default {
     },
     data() {
         return {
-            activeTab: 'expense'
+            activeTab: 'expense',
+            monthFilterEnabled: false,
+            sortDirection: 'desc'
         }
     },
     computed: {
         filteredTransactions() {
-            return this.store.transactions.filter(t => t.type === this.activeTab)
+            const now = new Date()
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+            const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+
+            return this.store.transactions
+                .filter(t => t.type === this.activeTab)
+                .filter(t => {
+                    if (!this.monthFilterEnabled) {
+                        return true
+                    }
+
+                    const date = this.getTransactionDate(t)
+                    return date >= monthStart && date <= monthEnd
+                })
+                .sort((a, b) => {
+                    const aTime = this.getTransactionDate(a).getTime()
+                    const bTime = this.getTransactionDate(b).getTime()
+                    return this.sortDirection === 'desc' ? bTime - aTime : aTime - bTime
+                })
+        }
+    },
+    methods: {
+        toggleMonthFilter() {
+            this.monthFilterEnabled = !this.monthFilterEnabled
+        },
+        toggleSortDirection() {
+            this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc'
+        },
+        getTransactionDate(transaction) {
+            const value = transaction?.date
+            if (value && typeof value.toDate === 'function') {
+                return value.toDate()
+            }
+
+            if (value instanceof Date) {
+                return value
+            }
+
+            const parsed = value ? new Date(value) : null
+            if (parsed && !Number.isNaN(parsed.getTime())) {
+                return parsed
+            }
+
+            return new Date(0)
         }
     },
     watch: {
@@ -120,6 +183,7 @@ html {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
 }
 
 .page-header h1 {
@@ -128,17 +192,47 @@ html {
     color: var(--text-900);
 }
 
-.header-icons {
+.header-controls {
     display: flex;
-    gap: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
-.icon-button {
-    background: transparent;
-    border: none;
-    font-size: 18px;
+.header-action-btn {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-700);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
     cursor: pointer;
-    padding: 4px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.header-action-btn:hover {
+    border-color: #c9d4d0;
+    background: #fafcfa;
+}
+
+.header-action-btn.active {
+    border-color: var(--brand);
+    background: #edf6f2;
+    color: var(--text-900);
+}
+
+.action-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.action-text {
+    white-space: nowrap;
 }
 
 .tab-bar {

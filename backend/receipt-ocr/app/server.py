@@ -1,9 +1,12 @@
 import json
+import os
+import re
 from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from receipt_ocr.processors import ReceiptProcessor
@@ -18,6 +21,17 @@ app = FastAPI(
     title="Receipt OCR API",
     description="Extract structured data from receipt images using LLM",
     version="1.0.0",
+)
+
+frontend_origins = os.getenv("FRONTEND_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+allow_origins = [origin.strip() for origin in frontend_origins.split(",") if origin.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Default JSON schema (same as CLI)
@@ -101,4 +115,12 @@ async def ocr_receipt(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+        message = str(e)
+        match = re.search(r"Error code:\s*(\d{3})", message)
+
+        if match:
+            status_code = int(match.group(1))
+            if 400 <= status_code < 600:
+                raise HTTPException(status_code=status_code, detail=f"Processing failed: {message}")
+
+        raise HTTPException(status_code=500, detail=f"Processing failed: {message}")

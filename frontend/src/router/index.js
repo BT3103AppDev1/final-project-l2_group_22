@@ -11,6 +11,7 @@ import TransactionDetails from "@/views/TransactionDetails.vue";
 import EditTransaction from "@/views/EditTransaction.vue";
 import Insights from "@/views/Insights.vue";
 import Settings from "@/views/Settings.vue";
+import ImageUpload from "@/views/ImageUpload.vue";
 import Profile from "@/views/Profile.vue";
 import Categories from "@/views/Categories.vue";
 import AddCategories from "@/views/AddCategories.vue";
@@ -78,6 +79,12 @@ const routes = [
     path: "/insights",
     name: "Insights",
     component: Insights,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/uploader",
+    name: "ImageUpload",
+    component: ImageUpload,
     meta: { requiresAuth: true },
   },
   {
