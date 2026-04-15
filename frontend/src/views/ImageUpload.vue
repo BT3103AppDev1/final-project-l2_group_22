@@ -2,11 +2,12 @@
   <div class="web-page">
     <header class="page-header">
       <h1>Receipt Upload</h1>
-      <p>Turn a receipt image into a reviewed expense entry.</p>
     </header>
 
     <main class="page-content">
-      <ImageUploader />
+      <section class="content-shell">
+        <ImageUploader />
+      </section>
     </main>
 
     <BottomNav currentTab="uploader" />
@@ -32,16 +33,15 @@ export default {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(circle at 100% -10%, #dff1ea 0%, transparent 36%),
-    radial-gradient(circle at 0% 0%, #e9f3ef 0%, transparent 30%),
-    #f4f6f5;
+    radial-gradient(circle at 100% -10%, #d8efe4 0%, transparent 38%),
+    radial-gradient(circle at 0% 5%, #f0efe6 0%, transparent 34%),
+    linear-gradient(170deg, #f7f8f7 0%, #eff2f1 100%);
 }
 
 .page-header {
   padding: 20px;
   border-bottom: 2px solid darkgray;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(4px);
+  background: #ffffff;
 }
 
 .page-header h1 {
@@ -50,14 +50,31 @@ export default {
   color: #24302c;
 }
 
-.page-header p {
-  margin: 6px 0 0;
-  color: #5e6c66;
-  font-size: 14px;
-}
-
 .page-content {
   flex: 1;
-  padding: 20px;
+  padding: 18px;
+}
+
+.content-shell {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  animation: content-enter 460ms ease-out;
+}
+
+@media (min-width: 768px) {
+  .page-content {
+    padding: 24px;
+  }
+}
+
+@keyframes content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

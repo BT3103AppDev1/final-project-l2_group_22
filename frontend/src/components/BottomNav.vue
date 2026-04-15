@@ -69,23 +69,23 @@ export default {
 }
 
 .bottom-nav-spacer {
-    height: calc(58px + env(safe-area-inset-bottom));
+    height: calc(60px + env(safe-area-inset-bottom));
 }
 
 .bottom-nav {
     position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(100%, 560px);
+    left: 0;
+    transform: none;
+    width: 100%;
     bottom: 0;
     z-index: 20;
     display: flex;
     justify-content: space-between;
     gap: 2px;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
     background: #fff;
-    border-top: 2px solid darkgray;
-    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+    border-top: 1px solid #b7bfbc;
+    box-shadow: 0 -3px 12px rgba(15, 23, 42, 0.08);
 }
 
 .nav-button {
@@ -105,7 +105,7 @@ export default {
 }
 
 .nav-icon {
-    width:18px;
+    width: 18px;
     height: 18px;
     stroke: currentColor;
     stroke-width: 1.8;
@@ -115,6 +115,7 @@ export default {
 
 .nav-label {
     font-size: 11px;
+    font-weight: 500;
     text-align: center;
     width: 100%;
     white-space: nowrap;
