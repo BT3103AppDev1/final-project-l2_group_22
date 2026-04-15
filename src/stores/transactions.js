@@ -90,13 +90,14 @@ export const useTransactionsStore = defineStore('transactions', {
       // Add transaction optimistically to store immediately for instant feedback
       const optimisticTransaction = { id: `_temp_${Date.now()}`, ...docData }
       this.transactions.unshift(optimisticTransaction)
+      let timeoutId = null
 
       try {
         // Implement 2-second timeout for save operation (NF-01 requirement)
         const savePromise = addDoc(collection(db, 'transactions'), docData)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Save operation timed out after 2 seconds')), 2000)
-        )
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Save operation timed out after 2 seconds')), 2000)
+        })
 
         const ref = await Promise.race([savePromise, timeoutPromise])
 
@@ -112,6 +113,10 @@ export const useTransactionsStore = defineStore('transactions', {
         this.transactions = this.transactions.filter(t => t.id !== optimisticTransaction.id)
         this.error = e.message
         throw e
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+        }
       }
     },
 
@@ -127,12 +132,13 @@ export const useTransactionsStore = defineStore('transactions', {
       if (index !== -1) {
         this.transactions[index] = { id, ...updatedData }
       }
+      let timeoutId = null
 
       try {
         const updatePromise = updateDoc(doc(db, 'transactions', id), updatedData)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Update operation timed out after 2 seconds')), 2000)
-        )
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Update operation timed out after 2 seconds')), 2000)
+        })
         await Promise.race([updatePromise, timeoutPromise])
       } catch (e) {
         // Rollback optimistic update on error
@@ -141,6 +147,10 @@ export const useTransactionsStore = defineStore('transactions', {
         }
         this.error = e.message
         throw e
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+        }
       }
     },
 
@@ -156,12 +166,13 @@ export const useTransactionsStore = defineStore('transactions', {
       if (index !== -1) {
         this.transactions.splice(index, 1)
       }
+      let timeoutId = null
 
       try {
         const deletePromise = deleteDoc(doc(db, 'transactions', id))
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Delete operation timed out after 2 seconds')), 2000)
-        )
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Delete operation timed out after 2 seconds')), 2000)
+        })
         await Promise.race([deletePromise, timeoutPromise])
       } catch (e) {
         // Rollback optimistic removal on error
@@ -170,6 +181,10 @@ export const useTransactionsStore = defineStore('transactions', {
         }
         this.error = e.message
         throw e
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+        }
       }
     }
   }
