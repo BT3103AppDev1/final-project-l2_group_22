@@ -15,5 +15,6 @@ matplotlib-inline>=0.1
 platformdirs>=2.5
 python-dateutil>=2.8.2
 PyYAML>=5.3
+pillow>=12.2.0
 tzdata
 receipt-ocr
