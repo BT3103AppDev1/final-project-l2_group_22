@@ -119,6 +119,56 @@
           rows="3"
         ></textarea>
       </div>
+
+      <div class="form-group">
+        <label class="form-label">Recurrence (Optional)</label>
+        <select
+          v-model="form.recurrence"
+          class="form-input"
+          @change="handleRecurrenceChange($event.target.value)"
+        >
+          <option value="none">One-time transaction</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Every 2 weeks</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+
+      <div v-if="form.recurrence !== 'none'" class="form-group">
+        <label for="editRecurrenceEndType" class="form-label">Recurrence Ends (Optional)</label>
+        <select
+          id="editRecurrenceEndType"
+          v-model="form.recurrenceEndType"
+          class="form-input"
+          @change="handleRecurrenceEndTypeChange($event.target.value)"
+        >
+          <option value="never">Never</option>
+          <option value="after">After number of occurrences</option>
+          <option value="on">On a specific date</option>
+        </select>
+
+        <div v-if="form.recurrenceEndType === 'after'" class="recurrence-end-details">
+          <input
+            type="number"
+            min="1"
+            max="100"
+            v-model.number="form.recurrenceOccurrences"
+            class="form-input recurrence-input recurrence-input-count"
+            placeholder="# occurrences"
+          />
+          <span class="recurrence-hint">occurrences</span>
+        </div>
+
+        <div v-if="form.recurrenceEndType === 'on'" class="recurrence-end-details">
+          <input
+            type="date"
+            v-model="form.recurrenceEndDateStr"
+            class="form-input recurrence-input recurrence-input-date"
+          />
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -143,6 +193,10 @@ export default {
         dateStr: "",
         merchant: "",
         note: "",
+        recurrence: "none",
+        recurrenceEndType: "never",
+        recurrenceOccurrences: 1,
+        recurrenceEndDateStr: "",
       },
       errors: {},
     };
@@ -189,6 +243,25 @@ export default {
       this.errors.category = "";
     },
 
+    handleRecurrenceChange(value) {
+      this.form.recurrence = value;
+      if (value === "none") {
+        this.form.recurrenceEndType = "never";
+        this.form.recurrenceOccurrences = 1;
+        this.form.recurrenceEndDateStr = "";
+      }
+    },
+
+    handleRecurrenceEndTypeChange(value) {
+      this.form.recurrenceEndType = value;
+      if (value === "after" && (!this.form.recurrenceOccurrences || this.form.recurrenceOccurrences < 1)) {
+        this.form.recurrenceOccurrences = 1;
+      }
+      if (value !== "on") {
+        this.form.recurrenceEndDateStr = "";
+      }
+    },
+
     async fetchTransaction() {
       const txnId = this.$route.params.id;
       try {
@@ -205,6 +278,9 @@ export default {
           );
           this.form.merchant = data.merchant || "";
           this.form.note = data.note || "";
+          this.form.recurrence = data.recurrence || "none";
+          this.form.recurrenceEndType = data.recurrenceEndType || "never";
+          this.form.recurrenceOccurrences = data.recurrenceOccurrences || 1;
 
           // Convert Firestore Timestamp to yyyy-mm-dd for the date input
           if (data.date) {
@@ -212,6 +288,14 @@ export default {
               ? data.date.toDate()
               : new Date(data.date);
             this.form.dateStr = date.toISOString().split("T")[0];
+          }
+
+          // Convert recurrence end date if present
+          if (data.recurrenceEndDate) {
+            const endDate = data.recurrenceEndDate.toDate
+              ? data.recurrenceEndDate.toDate()
+              : new Date(data.recurrenceEndDate);
+            this.form.recurrenceEndDateStr = endDate.toISOString().split("T")[0];
           }
         }
       } catch (err) {
@@ -253,6 +337,14 @@ export default {
           date: Timestamp.fromDate(new Date(this.form.dateStr)),
           merchant: this.form.merchant || "",
           note: this.form.note || "",
+          recurrence: this.form.recurrence || "none",
+          ...(this.form.recurrence !== "none" ? {
+            recurrenceEndType: this.form.recurrenceEndType || "never",
+            recurrenceOccurrences: this.form.recurrenceEndType === "after" ? this.form.recurrenceOccurrences : null,
+            recurrenceEndDate: this.form.recurrenceEndType === "on" && this.form.recurrenceEndDateStr
+              ? Timestamp.fromDate(new Date(this.form.recurrenceEndDateStr))
+              : null,
+          } : {})
         };
 
         await this.store.updateTransaction(txnId, updatedData);
@@ -488,5 +580,37 @@ select.form-input {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Recurrence Styles ── */
+.recurrence-end-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.recurrence-input {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  height: auto !important;
+}
+
+.recurrence-input-count {
+  width: 120px !important;
+}
+
+.recurrence-input-date {
+  width: 180px !important;
+}
+
+.recurrence-hint {
+  font-size: 12px;
+  color: #5e6c66;
+}
+
+.recurrence-input::placeholder {
+  color: #5e6c66;
+  opacity: 0.6;
 }
 </style>

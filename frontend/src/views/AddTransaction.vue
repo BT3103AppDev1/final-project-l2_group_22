@@ -199,6 +199,65 @@
           ></textarea>
         </div>
 
+        <!-- Recurrence (optional) -->
+        <div class="form-group">
+          <label for="recurrence" class="field-label">
+            Recurrence <span class="optional">(optional)</span>
+          </label>
+          <select
+            id="recurrence"
+            :value="recurrence"
+            class="field-input"
+            @change="handleRecurrenceChange($event.target.value)"
+          >
+            <option value="none">One-time transaction</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Every 2 weeks</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+
+        <!-- Recurrence End (conditional) -->
+        <div v-if="recurrence !== 'none'" class="form-group">
+          <label for="recurrenceEndType" class="field-label">
+            Recurrence Ends <span class="optional">(optional)</span>
+          </label>
+          <select
+            id="recurrenceEndType"
+            :value="recurrenceEndType"
+            class="field-input"
+            @change="handleRecurrenceEndTypeChange($event.target.value)"
+          >
+            <option value="never">Never</option>
+            <option value="after">After number of occurrences</option>
+            <option value="on">On a specific date</option>
+          </select>
+
+          <div v-if="recurrenceEndType === 'after'" class="recurrence-end-details">
+            <input
+              type="number"
+              min="1"
+              max="100"
+              v-model.number="recurrenceOccurrences"
+              class="field-input recurrence-input recurrence-input-count"
+              placeholder="# occurrences"
+            />
+            <span class="recurrence-hint">occurrences</span>
+          </div>
+
+          <div v-if="recurrenceEndType === 'on'" class="recurrence-end-details">
+            <input
+              type="text"
+              placeholder="dd/mm/yyyy"
+              :value="recurrenceEndDateInput"
+              class="field-input recurrence-input recurrence-input-date"
+              @input="handleRecurrenceEndDateChange($event.target.value)"
+            />
+          </div>
+        </div>
+
         <!-- Error message -->
         <div v-if="saveError" class="save-error">{{ saveError }}</div>
 
@@ -248,6 +307,11 @@ export default {
       calendarYear: new Date().getFullYear(),
       merchant: "",
       notes: "",
+      recurrence: "none",
+      recurrenceEndType: "never",
+      recurrenceOccurrences: 1,
+      recurrenceEndDate: null,
+      recurrenceEndDateInput: "",
       errors: {
         amount: "",
         category: "",
@@ -462,6 +526,39 @@ export default {
       this.notes = value;
     },
 
+    handleRecurrenceChange(value) {
+      this.recurrence = value;
+      if (value === "none") {
+        this.recurrenceEndType = "never";
+        this.recurrenceOccurrences = 1;
+        this.recurrenceEndDate = null;
+        this.recurrenceEndDateInput = "";
+      }
+    },
+
+    handleRecurrenceEndTypeChange(value) {
+      this.recurrenceEndType = value;
+      if (value === "after" && (!this.recurrenceOccurrences || this.recurrenceOccurrences < 1)) {
+        this.recurrenceOccurrences = 1;
+      }
+      if (value !== "on") {
+        this.recurrenceEndDate = null;
+        this.recurrenceEndDateInput = "";
+      }
+    },
+
+    handleRecurrenceEndDateChange(value) {
+      this.recurrenceEndDateInput = value;
+      if (!value) {
+        this.recurrenceEndDate = null;
+        return;
+      }
+      const parsedDate = this.parseDateFromDDMMYYYY(value);
+      if (parsedDate && !isNaN(parsedDate.getTime())) {
+        this.recurrenceEndDate = parsedDate;
+      }
+    },
+
     goBack() {
       this.$router.push(`/transactions?tab=${this.type}`);
     },
@@ -524,6 +621,10 @@ export default {
           userId: this.authStore.currentUserId,
           merchant: this.merchant.trim(),
           note: this.notes.trim(),
+          recurrence: this.recurrence,
+          recurrenceEndType: this.recurrence !== "none" ? this.recurrenceEndType : null,
+          recurrenceOccurrences: this.recurrence !== "none" && this.recurrenceEndType === "after" ? this.recurrenceOccurrences : null,
+          recurrenceEndDate: this.recurrence !== "none" && this.recurrenceEndType === "on" ? this.recurrenceEndDate : null,
         });
         this.$router.push(`/transactions?tab=${this.type}`);
       } catch (error) {
@@ -1123,5 +1224,37 @@ select.field-input {
 }
 .footer-button.today:hover {
   background: rgba(94, 148, 134, 0.08);
+}
+
+/* ── Recurrence Styles ── */
+.recurrence-end-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.recurrence-input {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  height: auto !important;
+}
+
+.recurrence-input-count {
+  width: 120px !important;
+}
+
+.recurrence-input-date {
+  width: 160px !important;
+}
+
+.recurrence-hint {
+  font-size: 12px;
+  color: var(--text-700);
+}
+
+.recurrence-input::placeholder {
+  color: var(--text-700);
+  opacity: 0.6;
 }
 </style>
