@@ -95,14 +95,14 @@
             >
               <div class="goal-progress-header">
                 <span class="goal-name">{{ gp.goal.displayName }}</span>
-                <span class="goal-status-badge" :class="statusClass(gp.status)">{{ gp.status }}</span>
+                <span class="goal-status-badge" :class="gp.statusClass">{{ gp.status }}</span>
               </div>
 
               <div class="goal-progress-bar-wrap">
                 <div
                   class="goal-progress-bar"
-                  :class="statusClass(gp.status)"
-                  :style="{ width: gp.progressWidth }"
+                  :class="gp.statusClass"
+                  :style="{ width: gp.progressWidth, minWidth: parseFloat(gp.progressWidth) > 0 ? '4px' : '0' }"
                 ></div>
               </div>
 
@@ -265,13 +265,16 @@ export default {
     },
 
     goalProgress() {
-      return this.goalStore.formattedGoals.map(goal => {
-        const actual = this.toSafeNumber(this.goalStore.goalActual(goal, this.periodTransactions))
+      return this.goalStore.formattedGoals.map((goal, idx) => {
+        const rawActual = this.goalStore.goalActual(goal, this.periodTransactions)
+        const actual = this.toSafeNumber(rawActual)
         const target = this.toSafeNumber(goal.targetAmount)
-        const status = this.goalStatus(actual, target)
-        const progressWidth = this.barWidth(actual, target)
+        const isSavingsGoal = goal.type === 'Monthly Savings Target'
+        const status = this.goalStatus(actual, target, isSavingsGoal)
+        const statusClass = this.goalStatusClass(status, isSavingsGoal)
+        const progressWidth = this.barWidth(actual, target, status)
 
-        return { goal, actual, target, status, progressWidth }
+        return { goal, actual, target, status, statusClass, progressWidth }
       })
     }
   },
@@ -339,16 +342,27 @@ export default {
       return d
     },
 
-    statusClass(status) {
-      if (status === 'Exceeded') return 'status-exceeded'
+    goalStatusClass(status, isSavingsGoal = false) {
+      if (status === 'Met') return 'status-met'
+      if (status === 'Exceeded') return isSavingsGoal ? 'status-met' : 'status-exceeded'
       if (status === 'At risk') return 'status-at-risk'
       return 'status-on-track'
     },
 
-    goalStatus(actual, target) {
-      if (target <= 0) return 'On track'
-      if (actual > target) return 'Exceeded'
-      if (actual >= target * 0.8) return 'At risk'
+    goalStatus(actual, target, isSavingsGoal = false) {
+      const safeActual = this.toSafeNumber(actual)
+      const safeTarget = this.toSafeNumber(target)
+
+      if (safeTarget <= 0) return 'On track'
+
+      if (isSavingsGoal) {
+        if (safeActual >= safeTarget) return 'Met'
+      } else {
+        if (safeActual > safeTarget) return 'Exceeded'
+      }
+
+      const thresholdAmount = safeTarget * 0.8
+      if (safeActual >= thresholdAmount) return 'At risk'
       return 'On track'
     },
 
@@ -366,9 +380,9 @@ export default {
       return 0
     },
 
-    barWidth(actual, target) {
-      const safeActual = this.toSafeNumber(actual)
-      const safeTarget = this.toSafeNumber(target)
+    barWidth(actual, target, status) {
+      const safeActual = Math.abs(this.toSafeNumber(actual)) 
+      const safeTarget = Math.abs(this.toSafeNumber(target))
 
       if (safeTarget <= 0) return '0%'
 
@@ -376,7 +390,8 @@ export default {
       if (!Number.isFinite(ratio)) return '0%'
 
       const pct = Math.max(0, Math.min(ratio, 100))
-      return `${pct.toFixed(1)}%`
+      const widthPercent = Math.round(pct * 10) / 10 
+      return `${widthPercent}%`
     }
   }
 }
@@ -794,6 +809,11 @@ export default {
   color: var(--expense);
 }
 
+.goal-status-badge.status-met {
+  background: #e6f4ed;
+  color: var(--income);
+}
+
 .goal-progress-bar-wrap {
   width: 100%;
   height: 8px;
@@ -806,18 +826,25 @@ export default {
   height: 100%;
   border-radius: 4px;
   transition: width 0.3s ease;
+  display: block;
+  min-height: 8px;
+  background: #ccc;
 }
 
 .goal-progress-bar.status-on-track {
-  background: green;
+  background: #2d8a4f !important;
 }
 
 .goal-progress-bar.status-at-risk {
-  background: #e67e00;
+  background: #e67e00 !important;
 }
 
 .goal-progress-bar.status-exceeded {
-  background: var(--expense);
+  background: #d9534f !important;
+}
+
+.goal-progress-bar.status-met {
+  background: #2d8a4f !important;
 }
 
 .goal-progress-amounts {

@@ -396,8 +396,12 @@
                                     <span class="goal-number-value">{{ formatCurrency(gi.goal.targetAmount) }}</span>
                                 </div>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill goal-fill" :class="gi.statusClass" :style="{ width: gi.progressWidth }"></div>
+                            <div class="progress-bar goal-progress-track">
+                                <div
+                                    class="progress-fill goal-fill goal-progress-fill"
+                                    :class="gi.statusClass"
+                                    :style="{ width: gi.progressWidth, minWidth: gi.progressWidth !== '0.0%' ? '4px' : '0' }"
+                                ></div>
                             </div>
                             <button class="why-button" @click="openGoalExplanation(gi)">
                                 <svg class="why-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1057,10 +1061,10 @@ export default {
                     amount: t.normalizedAmount,
                     category: t.normalizedCategory
                 }))
-                const actual = this.goalStore.goalActual(goal, periodTxns)
-                const status = this.goalStore.goalStatus(actual, goal.targetAmount)
+                const actual = this.toSafeNumber(this.goalStore.goalActual(goal, periodTxns))
+                const target = this.toSafeNumber(goal.targetAmount)
+                const status = this.goalStore.goalStatus(actual, target)
                 const isSpending = goal.type !== 'Monthly Savings Target'
-                const pct = goal.targetAmount > 0 ? (actual / goal.targetAmount) * 100 : 0
 
                 let statement
                 if (isSpending) {
@@ -1090,7 +1094,14 @@ export default {
                     statusClass = 'on-track'
                 }
 
-                const progressWidth = `${Math.min(pct, 100).toFixed(1)}%`
+                let progressWidth
+                if (status === 'Exceeded') {
+                    progressWidth = '100%'
+                } else {
+                    const ratio = target > 0 ? (actual / target) * 100 : 0
+                    const pct = Number.isFinite(ratio) ? Math.max(0, Math.min(ratio, 100)) : 0
+                    progressWidth = `${pct.toFixed(1)}%`
+                }
 
                 return {
                     goal: formatted,
@@ -1163,6 +1174,10 @@ export default {
             }, 0) / values.length
 
             return Math.sqrt(variance)
+        },
+        toSafeNumber(value) {
+            const parsed = Number(value)
+            return Number.isFinite(parsed) ? parsed : 0
         },
         formatCurrency(amount) {
             return `$${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
@@ -1747,6 +1762,15 @@ export default {
 
 .progress-fill.goal-fill.met {
     background: linear-gradient(90deg, #4f8a73, #7cc39f);
+}
+
+.goal-progress-track {
+    height: 10px;
+    background: #d1d5db;
+}
+
+.goal-progress-fill {
+    display: block;
 }
 
 .adjust-goals-btn {
