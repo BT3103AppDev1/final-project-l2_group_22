@@ -24,6 +24,14 @@
                     <span class="action-text">{{ sortDirection === 'desc' ? 'Newest First' : 'Oldest First' }}</span>
                 </button>
                 <button
+                    class="header-action-btn export-trigger"
+                    title="Export transactions to CSV or Excel"
+                    @click="openExportModal"
+                >
+                    <span class="action-icon">⤓</span>
+                    <span class="action-text">Export</span>
+                </button>
+                <button
                     class="header-action-btn danger-trigger"
                     title="Delete transactions by time period"
                     @click="openWipeModal"
@@ -63,6 +71,61 @@
             <EmptyState v-else :activeTab="activeTab" />
             <button class="fab" @click="$router.push(`/transactions/add?type=${activeTab}`)">+</button>
         </main>
+
+        <div v-if="showExportModal" class="modal-overlay" @click.self="closeExportModal">
+            <div class="wipe-modal" role="dialog" aria-modal="true" aria-label="Export transactions">
+                <h3>Export Transactions</h3>
+                <p class="wipe-note">
+                    Choose a file format and period. You can export either all time data or a custom start/end date range.
+                </p>
+
+                <div class="wipe-form-group">
+                    <label for="export-format">File format</label>
+                    <select id="export-format" v-model="exportFormat">
+                        <option value="csv">CSV</option>
+                        <option value="excel">Excel (.xlsx)</option>
+                    </select>
+                </div>
+
+                <div class="wipe-form-group">
+                    <label for="export-range">Time period</label>
+                    <select id="export-range" v-model="exportScope">
+                        <option value="all_time">All time</option>
+                        <option value="custom">Custom range</option>
+                    </select>
+                </div>
+
+                <div v-if="exportScope === 'custom'" class="custom-range-grid">
+                    <div class="wipe-form-group">
+                        <label for="export-start">Start date</label>
+                        <input id="export-start" v-model="exportStartDate" type="date" />
+                    </div>
+                    <div class="wipe-form-group">
+                        <label for="export-end">End date</label>
+                        <input id="export-end" v-model="exportEndDate" type="date" />
+                    </div>
+                </div>
+
+                <div class="wipe-preview" :class="{ warning: exportScope === 'all_time' }">
+                    <strong>{{ exportSummaryLabel }}</strong>
+                    <span>{{ exportPreviewCount }} transaction(s) ready to export.</span>
+                </div>
+
+                <p v-if="exportError" class="wipe-error">{{ exportError }}</p>
+
+                <div class="wipe-actions">
+                    <button class="modal-btn secondary" :disabled="isExporting" @click="closeExportModal">Cancel</button>
+                    <button
+                        class="modal-btn"
+                        :class="exportFormat === 'excel' ? 'export-accent' : 'primary'"
+                        :disabled="isExporting || !canExport"
+                        @click="confirmExportTransactions"
+                    >
+                        {{ isExporting ? 'Exporting...' : 'Export' }}
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div v-if="showWipeModal" class="modal-overlay" @click.self="closeWipeModal">
             <div class="wipe-modal" role="dialog" aria-modal="true" aria-label="Wipe transactions by period">
@@ -131,6 +194,7 @@ import TransactionItem from "@/components/TransactionItem.vue"
 import EmptyState from "@/components/EmptyState.vue"
 import { useTransactionsStore } from "@/stores/transactions"
 import { useAuthStore } from "@/stores/AuthStore"
+import { exportTransactionsCsv, exportTransactionsExcel } from "@/utils/transactionExport"
 
 export default {
     name: "Transactions",
@@ -144,6 +208,13 @@ export default {
             activeTab: 'expense',
             monthFilterEnabled: false,
             sortDirection: 'desc',
+            showExportModal: false,
+            exportScope: 'all_time',
+            exportStartDate: '',
+            exportEndDate: '',
+            exportFormat: 'csv',
+            isExporting: false,
+            exportError: '',
             showWipeModal: false,
             wipeScope: 'this_month',
             customStartDate: '',
@@ -236,6 +307,74 @@ export default {
                 label: 'This month'
             }
         },
+        currentExportRange() {
+            const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
+            const endOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999)
+
+            if (this.exportScope === 'all_time') {
+                return {
+                    allTime: true,
+                    startDate: null,
+                    endDate: null,
+                    label: 'All time'
+                }
+            }
+
+            if (!this.exportStartDate || !this.exportEndDate) {
+                return {
+                    allTime: false,
+                    startDate: null,
+                    endDate: null,
+                    label: 'Custom range'
+                }
+            }
+
+            const start = new Date(this.exportStartDate)
+            const end = new Date(this.exportEndDate)
+            return {
+                allTime: false,
+                startDate: startOfDay(start),
+                endDate: endOfDay(end),
+                label: 'Custom range'
+            }
+        },
+        transactionsForExport() {
+            const userId = this.authStore.currentUserId
+            if (!userId) return []
+
+            const { allTime, startDate, endDate } = this.currentExportRange
+            return this.store.transactions.filter(transaction => {
+                if (transaction.userId !== userId) return false
+                if (allTime) return true
+                if (!startDate || !endDate) return false
+
+                const date = this.getTransactionDate(transaction)
+                return date >= startDate && date <= endDate
+            })
+        },
+        exportPreviewCount() {
+            return this.transactionsForExport.length
+        },
+        exportSummaryLabel() {
+            return `${this.currentExportRange.label} selected`
+        },
+        canExport() {
+            if (!this.authStore.currentUserId) {
+                return false
+            }
+
+            if (this.exportScope === 'custom') {
+                if (!this.exportStartDate || !this.exportEndDate) {
+                    return false
+                }
+
+                if (new Date(this.exportStartDate) > new Date(this.exportEndDate)) {
+                    return false
+                }
+            }
+
+            return this.exportPreviewCount > 0
+        },
         wipePreviewCount() {
             const userId = this.authStore.currentUserId
             if (!userId) return 0
@@ -279,6 +418,58 @@ export default {
         },
         toggleSortDirection() {
             this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc'
+        },
+        openExportModal() {
+            this.showExportModal = true
+            this.exportError = ''
+        },
+        closeExportModal(force = false) {
+            if (this.isExporting && !force) {
+                return
+            }
+
+            this.showExportModal = false
+            this.exportError = ''
+        },
+        buildExportFileName() {
+            const now = new Date()
+            const pad = (value) => String(value).padStart(2, '0')
+            const nowLabel = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`
+
+            if (this.exportScope === 'custom' && this.exportStartDate && this.exportEndDate) {
+                const start = this.exportStartDate.replaceAll('-', '')
+                const end = this.exportEndDate.replaceAll('-', '')
+                return `transactions_${start}_${end}_${nowLabel}`
+            }
+
+            return `transactions_all_time_${nowLabel}`
+        },
+        async confirmExportTransactions() {
+            this.exportError = ''
+
+            if (!this.canExport) {
+                this.exportError = 'Please choose a valid date range with at least one transaction.'
+                return
+            }
+
+            this.isExporting = true
+
+            try {
+                const transactions = this.transactionsForExport
+                const baseFileName = this.buildExportFileName()
+
+                if (this.exportFormat === 'excel') {
+                    await exportTransactionsExcel(transactions, `${baseFileName}.xlsx`)
+                } else {
+                    exportTransactionsCsv(transactions, `${baseFileName}.csv`)
+                }
+
+                this.closeExportModal(true)
+            } catch (error) {
+                this.exportError = error?.message || 'Failed to export transactions. Please try again.'
+            } finally {
+                this.isExporting = false
+            }
         },
         openWipeModal() {
             this.showWipeModal = true
@@ -431,6 +622,16 @@ html {
     border-color: var(--brand);
     background: #edf6f2;
     color: var(--text-900);
+}
+
+.header-action-btn.export-trigger {
+    border-color: #c8ddd6;
+    color: #2f6657;
+}
+
+.header-action-btn.export-trigger:hover {
+    border-color: #99c1b4;
+    background: #eef8f4;
 }
 
 .header-action-btn.danger-trigger {
@@ -650,6 +851,16 @@ html {
 
 .modal-btn.danger {
     background: #b33a36;
+    color: #ffffff;
+}
+
+.modal-btn.primary {
+    background: #3d5248;
+    color: #ffffff;
+}
+
+.modal-btn.export-accent {
+    background: #2f6657;
     color: #ffffff;
 }
 
