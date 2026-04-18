@@ -58,14 +58,22 @@
         </div>
       </div>
 
-      <!-- Delete button -->
-      <button class="delete-btn" @click="showDeleteModal = true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-        </svg>
-        Delete Transaction
-      </button>
+      <!-- Action buttons (centered between detail card and page bottom) -->
+      <div class="action-buttons">
+        <button class="edit-btn" @click="goToEdit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          </svg>
+          Edit Transaction
+        </button>
+        <button class="delete-btn" @click="showDeleteModal = true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          Delete Transaction
+        </button>
+      </div>
     </main>
 
     <!-- Delete confirmation modal -->
@@ -338,6 +346,35 @@ export default {
   font-size: 15px;
   font-weight: 500;
   color: #24302c;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  background: #fff;
+  color: #4a6e5e;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.edit-btn:hover {
+  background: #ecfdf5;
 }
 
 /* Delete button */

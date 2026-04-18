@@ -153,6 +153,14 @@
                     </select>
                 </div>
 
+                <div class="wipe-form-group">
+                    <label for="wipe-category">Category (optional)</label>
+                    <select id="wipe-category" v-model="wipeCategory">
+                        <option value="">All categories</option>
+                        <option v-for="cat in wipeUniqueCategories" :key="cat" :value="cat">{{ cat }}</option>
+                    </select>
+                </div>
+
                 <div v-if="wipeScope === 'custom'" class="custom-range-grid">
                     <div class="wipe-form-group">
                         <label for="wipe-start">Start date</label>
@@ -220,6 +228,7 @@ export default {
             customStartDate: '',
             customEndDate: '',
             wipeType: 'expense',
+            wipeCategory: '',
             isWiping: false,
             wipeError: ''
         }
@@ -383,6 +392,7 @@ export default {
             return this.store.transactions.filter(transaction => {
                 if (transaction.userId !== userId) return false
                 if (transaction.type !== this.wipeType) return false
+                if (this.wipeCategory && transaction.category !== this.wipeCategory) return false
                 if (allTime) return true
                 if (!startDate || !endDate) return false
 
@@ -390,9 +400,17 @@ export default {
                 return date >= startDate && date <= endDate
             }).length
         },
+        wipeUniqueCategories() {
+            const cats = new Set()
+            this.store.transactions
+                .filter(t => t.type === this.wipeType)
+                .forEach(t => { if (t.category) cats.add(t.category) })
+            return [...cats].sort()
+        },
         wipeSummaryLabel() {
             const typeLabel = this.wipeType === 'expense' ? 'Expenses' : 'Income'
-            return `${this.currentWipeRange.label} selected (${typeLabel})`
+            const catLabel = this.wipeCategory ? ` — ${this.wipeCategory}` : ''
+            return `${this.currentWipeRange.label} selected (${typeLabel}${catLabel})`
         },
         canWipe() {
             if (!this.authStore.currentUserId) {
@@ -483,6 +501,7 @@ export default {
 
             this.showWipeModal = false
             this.wipeError = ''
+            this.wipeCategory = ''
         },
         async confirmWipeTransactions() {
             this.wipeError = ''
@@ -500,7 +519,8 @@ export default {
                     allTime,
                     startDate,
                     endDate,
-                    transactionType: this.wipeType
+                    transactionType: this.wipeType,
+                    category: this.wipeCategory || null
                 })
                 this.closeWipeModal(true)
             } catch (error) {

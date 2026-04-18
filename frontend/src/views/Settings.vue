@@ -247,6 +247,38 @@
             ></path>
           </svg>
         </button>
+
+        <button class="menu-item" @click="$router.push('/change-email')">
+          <div class="menu-left">
+            <div class="menu-icon-circle">
+              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M3 7l9 5 9-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="menu-text">
+              <p class="menu-title">Change Email</p>
+              <p class="menu-subtext">Update your sign-in email address</p>
+            </div>
+          </div>
+          <svg class="menu-arrow" viewBox="0 0 24 24" fill="none"><path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+
+        <button class="menu-item" @click="$router.push('/reset-password')">
+          <div class="menu-left">
+            <div class="menu-icon-circle">
+              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8 11V7a4 4 0 1 1 8 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="menu-text">
+              <p class="menu-title">Reset Password</p>
+              <p class="menu-subtext">Send a password reset link to your email</p>
+            </div>
+          </div>
+          <svg class="menu-arrow" viewBox="0 0 24 24" fill="none"><path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
       </div>
 
       <p class="desc">Support</p>

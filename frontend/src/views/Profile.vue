@@ -31,7 +31,7 @@
           <span class="action-arrow">&rsaquo;</span>
         </button>
 
-        <button class="action-item action-item--danger" @click="handleLogout">
+        <button class="action-item action-item--danger" @click="showLogoutModal = true">
           <div class="action-copy">
             <p class="action-title">Log Out</p>
             <p class="action-subtext">Sign out from this device</p>
@@ -40,6 +40,19 @@
         </button>
       </section>
     </main>
+
+    <!-- Logout confirmation modal -->
+    <div v-if="showLogoutModal" class="modal-overlay" @click.self="showLogoutModal = false">
+      <div class="logout-modal">
+        <div class="logout-icon">👋</div>
+        <h2>Log out of CashSight?</h2>
+        <p class="logout-desc">You will need to sign in again to access your financial data.</p>
+        <button class="confirm-logout-btn" @click="handleLogout" :disabled="loggingOut">
+          {{ loggingOut ? 'Logging out...' : 'Log Out' }}
+        </button>
+        <button class="cancel-logout-btn" @click="showLogoutModal = false">Cancel</button>
+      </div>
+    </div>
 
     <BottomNav currentTab="settings" />
   </div>
@@ -61,6 +74,8 @@ export default {
       userName: 'CashSight User',
       userEmail: 'No email linked',
       authUnsubscribe: null,
+      showLogoutModal: false,
+      loggingOut: false,
     }
   },
   computed: {
@@ -105,6 +120,7 @@ export default {
       this.setProfile(auth.currentUser || user)
     },
     async handleLogout() {
+      this.loggingOut = true
       try {
         if (auth) {
           await signOut(auth)
@@ -112,6 +128,8 @@ export default {
       } catch (error) {
         console.error('Logout failed:', error)
       } finally {
+        this.loggingOut = false
+        this.showLogoutModal = false
         clearRememberMeCookie()
         this.$router.push('/login')
       }
@@ -248,5 +266,75 @@ export default {
 
 .action-item--danger .action-title {
   color: #b42318;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.logout-modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: min(400px, 90%);
+  text-align: center;
+}
+
+.logout-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.logout-modal h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2f3640;
+}
+
+.logout-desc {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #7b8190;
+  line-height: 1.5;
+}
+
+.confirm-logout-btn {
+  width: 100%;
+  padding: 14px;
+  background: #b42318;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.15s;
+}
+
+.confirm-logout-btn:hover {
+  background: #991b1b;
+}
+
+.confirm-logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-logout-btn {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  color: #7b8190;
+  cursor: pointer;
 }
 </style>

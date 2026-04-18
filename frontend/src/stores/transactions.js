@@ -210,7 +210,7 @@ export const useTransactionsStore = defineStore('transactions', {
       }
     },
 
-    async deleteTransactionsByPeriod({ userId, startDate = null, endDate = null, allTime = false, transactionType = null }) {
+    async deleteTransactionsByPeriod({ userId, startDate = null, endDate = null, allTime = false, transactionType = null, category = null }) {
       if (firebaseConfigError) {
         this.error = firebaseConfigError
         throw new Error(firebaseConfigError)
@@ -244,6 +244,10 @@ export const useTransactionsStore = defineStore('transactions', {
         }
 
         if (transactionType && transaction?.type !== transactionType) {
+          return false
+        }
+
+        if (category && transaction?.category !== category) {
           return false
         }
 

@@ -24,6 +24,29 @@ export default {
     BottomNav,
     ImageUploader,
   },
+  beforeRouteLeave(to, from, next) {
+    const uploaderEl = this.$refs?.uploaderRef
+    // If there's no active processing, allow navigation
+    if (!uploaderEl || !uploaderEl.isProcessing) {
+      const confirmed = window.confirm(
+        'Are you sure you want to leave? If a receipt was scanned, the result will be saved automatically.'
+      )
+      if (confirmed) {
+        next()
+      } else {
+        next(false)
+      }
+    } else {
+      const confirmed = window.confirm(
+        'A receipt is still being processed. Are you sure you want to leave? The scan may not be saved.'
+      )
+      if (confirmed) {
+        next()
+      } else {
+        next(false)
+      }
+    }
+  }
 };
 </script>
 
