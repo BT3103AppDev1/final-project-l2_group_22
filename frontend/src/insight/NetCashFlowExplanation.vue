@@ -1,57 +1,57 @@
 <template>
-  <div class="overlay" @click.self="$emit('close')">
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="net-cashflow-title">
-      <div class="sheet-header">
-        <h2 id="net-cashflow-title">Net Cash Flow &amp; Savings Rate</h2>
-        <button class="close-btn" type="button" @click="$emit('close')">Close</button>
-      </div>
+  <InsightExplanationSheet
+    title="Net Cash Flow & Savings Rate"
+    title-id="net-cashflow-title"
+    @close="$emit('close')"
+  >
+    <p class="section-label">How to find it ({{ periodLabel }})</p>
+    <p class="paragraph">
+      Compare total income versus total expense for the selected month.
+    </p>
 
-      <p class="section-label">How to find it ({{ periodLabel }})</p>
-      <p class="paragraph">
-        Compare total income versus total expense for the selected month.
-      </p>
-
-      <div class="formula-card">
-        <p class="formula-line">Net Cash Flow = Income - Expense</p>
-        <p class="formula-line">Savings Rate = (Net Cash Flow / Income) * 100%</p>
-      </div>
-
-      <div class="summary-grid">
-        <div class="summary-item">
-          <span>Income</span>
-          <strong>{{ formatCurrency(income) }}</strong>
-        </div>
-        <div class="summary-item">
-          <span>Expense</span>
-          <strong>{{ formatCurrency(expenses) }}</strong>
-        </div>
-        <div class="summary-item">
-          <span>Net Cash Flow</span>
-          <strong :class="netClass">{{ formatSignedCurrency(netCashflow) }}</strong>
-        </div>
-        <div class="summary-item">
-          <span>Savings Rate</span>
-          <strong>{{ savingsRateText }}</strong>
-        </div>
-      </div>
-
-      <p class="section-label">The Insight</p>
-      <p class="paragraph" v-if="savingsRate === null">
-        Savings rate cannot be calculated when there is no income in this period. Add or verify income transactions first.
-      </p>
-      <p class="paragraph" v-else-if="netCashflow >= 0">
-        You are living within your means this month. A positive net cash flow means money is left over after expenses, and that leftover percentage is your actual savings rate.
-      </p>
-      <p class="paragraph" v-else>
-        You are spending more than you earn this month. A negative savings rate indicates a monthly deficit and signals that spending or income needs adjustment.
-      </p>
+    <div class="formula-card">
+      <p class="formula-line">Net Cash Flow = Income - Expense</p>
+      <p class="formula-line">Savings Rate = (Net Cash Flow / Income) * 100%</p>
     </div>
-  </div>
+
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span>Income</span>
+        <strong>{{ formatCurrency(income) }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Expense</span>
+        <strong>{{ formatCurrency(expenses) }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Net Cash Flow</span>
+        <strong :class="netClass">{{ formatSignedCurrency(netCashflow) }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Savings Rate</span>
+        <strong>{{ savingsRateText }}</strong>
+      </div>
+    </div>
+
+    <p class="section-label">The Insight</p>
+    <p class="paragraph" v-if="savingsRate === null">
+      Savings rate cannot be calculated when there is no income in this period. Add or verify income transactions first.
+    </p>
+    <p class="paragraph" v-else-if="netCashflow >= 0">
+      You are living within your means this month. A positive net cash flow means money is left over after expenses, and that leftover percentage is your actual savings rate.
+    </p>
+    <p class="paragraph" v-else>
+      You are spending more than you earn this month. A negative savings rate indicates a monthly deficit and signals that spending or income needs adjustment.
+    </p>
+  </InsightExplanationSheet>
 </template>
 
 <script>
+import InsightExplanationSheet from "@/insight/InsightExplanationSheet.vue"
+
 export default {
   name: "NetCashFlowExplanation",
+  components: { InsightExplanationSheet },
   emits: ["close"],
   props: {
     periodLabel: {
@@ -99,50 +99,6 @@ export default {
 </script>
 
 <style scoped>
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 100;
-}
-
-.sheet {
-  width: min(640px, 100%);
-  max-height: 88vh;
-  overflow-y: auto;
-  background: #ffffff;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 -10px 28px rgba(15, 23, 42, 0.2);
-}
-
-.sheet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.sheet-header h2 {
-  margin: 0;
-  font-size: 18px;
-  color: #111827;
-}
-
-.close-btn {
-  border: none;
-  background: #f3f4f6;
-  color: #374151;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
 .section-label {
   margin: 16px 0 6px;
   font-size: 12px;
@@ -199,6 +155,7 @@ export default {
 
 .summary-item strong {
   color: #111827;
+  text-align: right;
 }
 
 .summary-item strong.positive {

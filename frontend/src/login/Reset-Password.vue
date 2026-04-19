@@ -46,10 +46,9 @@
         <button type="submit" class="submit-button">Send Reset Link</button>
       </form>
 
-      <p class="signin-copy">
-        Remember your password?
-        <router-link to="/login">Back to sign in.</router-link>
-      </p>
+      <button type="button" class="secondary-button" @click="$router.push('/profile')">
+        Back to Profile
+      </button>
     </section>
   </main>
 </template>
@@ -263,6 +262,25 @@ input:focus {
 
 .submit-button:hover {
   opacity: 0.9;
+}
+
+.secondary-button {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 10px;
+  background: #ffffff;
+  color: #33423d;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondary-button:hover {
+  background: #f8faf9;
+  border-color: #cdd7d3;
 }
 
 .signin-copy {

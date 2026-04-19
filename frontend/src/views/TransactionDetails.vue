@@ -2,9 +2,9 @@
   <div class="web-page">
     <!-- Header with back arrow and edit icon -->
     <header class="detail-header">
-      <button class="icon-btn" @click="$router.push('/transactions')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
+      <button class="back-icon-btn" type="button" aria-label="Go back" @click="$router.push('/transactions')">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M15 6l-6 6 6 6" />
         </svg>
       </button>
       <h1>Transaction Details</h1>
@@ -242,17 +242,64 @@ export default {
   color: #24302c;
 }
 
-.icon-btn {
-  background: none;
+.back-icon-btn {
+  background: transparent;
   border: none;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
+  border-radius: 50%;
+  color: #344054;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.back-icon-btn:hover {
+  background: rgba(36, 48, 44, 0.06);
+}
+
+.back-icon-btn:active {
+  background: rgba(36, 48, 44, 0.12);
+}
+
+.back-icon-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
   color: #24302c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(36, 48, 44, 0.06);
+}
+
+.icon-btn:active {
+  background: rgba(36, 48, 44, 0.12);
 }
 
 .icon-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Amount hero section */
@@ -351,8 +398,11 @@ export default {
 /* Action buttons */
 .action-buttons {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: center;
   gap: 10px;
+  margin: 22px auto 0;
+  width: min(100%, 560px);
 }
 
 .edit-btn {
@@ -360,11 +410,11 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
+  flex: 1;
   padding: 14px;
   background: #fff;
   color: #4a6e5e;
-  border: 1px solid #d1fae5;
+  border: 1px solid #2d8a4f;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 500;
@@ -383,11 +433,11 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
+  flex: 1;
   padding: 14px;
   background: #fff;
   color: #d9534f;
-  border: 1px solid #fecaca;
+  border: 1px solid #d9534f;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 500;

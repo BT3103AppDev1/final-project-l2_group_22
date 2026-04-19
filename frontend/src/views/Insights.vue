@@ -2,33 +2,34 @@
   <div class="web-page">
     <header class="page-header">
       <h1>Insights</h1>
+
+            <div class="header-controls">
+                <div class="period-selector">
+                    <label class="sr-only" for="insights-month">Select month</label>
+                    <select id="insights-month" v-model.number="selectedMonth" class="period-select">
+                        <option v-for="option in monthOptions" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </select>
+
+                    <label class="sr-only" for="insights-year">Select year</label>
+                    <select id="insights-year" v-model.number="selectedYear" class="period-select">
+                        <option v-for="year in availableYears" :key="year" :value="year">
+                            {{ year }}
+                        </option>
+                    </select>
+                </div>
+            </div>
     </header>
 
         <main class="page-content">
-            <div class="period-selector">
-                <button
-                    class="period-btn"
-                    :class="{ active: selectedPeriod === 'this-month' }"
-                    @click="selectedPeriod = 'this-month'"
-                >
-                    This month
-                </button>
-                <button
-                    class="period-btn"
-                    :class="{ active: selectedPeriod === 'last-month' }"
-                    @click="selectedPeriod = 'last-month'"
-                >
-                    Last month
-                </button>
-            </div>
-
             <p class="range-caption">Summary for {{ periodLabel }}</p>
 
             <div v-if="store.loading" class="loading-message">Loading insight...</div>
 
             <div v-else class="insights-stack">
-                <section class="insight-bubble">
-                    <div class="card-top">
+                <section class="insight-bubble" :class="{ collapsed: !isExpanded('net-cashflow') }">
+                    <div class="card-top" @click="toggleCard('net-cashflow')">
                         <div class="icon-circle">
                             <svg viewBox="0 0 24 24" class="card-icon" fill="none">
                                 <path d="M5 16.5L9 12.5L12 15.5L19 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -37,10 +38,13 @@
                         </div>
 
                         <div>
-                            <p class="card-label">NET CASH FLOW &amp; SAVINGS RATE</p>
+                            <p class="card-label">NET CASH FLOW &amp; SAVING RATE</p>
                             <p class="card-subtext">Income vs expense for the selected month</p>
                         </div>
                     </div>
+                    <button class="collapse-button" @click.stop="toggleCard('net-cashflow')" aria-label="Toggle net cash flow section">
+                        {{ isExpanded('net-cashflow') ? '−' : '+' }}
+                    </button>
 
                     <div class="metric-row">
                         <div class="metric-block income">
@@ -79,8 +83,8 @@
                     </button>
                 </section>
 
-                <section class="insight-bubble">
-                    <div class="card-top">
+                <section class="insight-bubble" :class="{ collapsed: !isExpanded('top-spending-categories') }">
+                    <div class="card-top" @click="toggleCard('top-spending-categories')">
                         <div class="icon-circle amber">
                             <svg viewBox="0 0 24 24" class="card-icon" fill="none">
                                 <path d="M3 6H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -95,6 +99,9 @@
                             <p class="card-subtext">Where most expense money is going</p>
                         </div>
                     </div>
+                    <button class="collapse-button" @click.stop="toggleCard('top-spending-categories')" aria-label="Toggle top spending categories section">
+                        {{ isExpanded('top-spending-categories') ? '−' : '+' }}
+                    </button>
 
                     <div v-if="topExpenseCategories.length" class="category-list">
                         <div v-for="item in topExpenseCategories" :key="item.category" class="category-item">
@@ -120,43 +127,9 @@
                     </button>
                 </section>
 
-                <section class="insight-bubble">
-                    <div class="card-top">
-                        <div class="icon-circle orange">
-                            <svg viewBox="0 0 24 24" class="card-icon" fill="none">
-                                <path d="M4 16L9 11L13 14L20 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M16 7H20V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                        </div>
 
-                        <div>
-                            <p class="card-label">SPENDING TRENDS OVER TIME</p>
-                            <p class="card-subtext">Monthly expense direction over the last year</p>
-                        </div>
-                    </div>
-
-                    <div class="trend-chart">
-                        <div v-for="point in expenseTrendSeries" :key="point.key" class="trend-column">
-                            <p class="trend-value">{{ formatCompactCurrency(point.amount) }}</p>
-                            <div class="trend-bar-track">
-                                <div class="trend-bar expense" :style="{ height: `${point.heightPct}%` }"></div>
-                            </div>
-                            <p class="trend-label">{{ point.label }}</p>
-                        </div>
-                    </div>
-
-                    <button class="why-button" @click="openExplanation('spending-trends')">
-                        <svg class="why-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"></circle>
-                            <path d="M9.8 9.5C9.8 8.3 10.8 7.5 12 7.5C13.2 7.5 14.2 8.3 14.2 9.5C14.2 10.4 13.7 11 12.8 11.5C12.2 11.9 12 12.2 12 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-                            <circle cx="12" cy="16.5" r="1" fill="currentColor"></circle>
-                        </svg>
-                        Why this?
-                    </button>
-                </section>
-
-                <section class="insight-bubble">
-                    <div class="card-top">
+                <section class="insight-bubble" :class="{ collapsed: !isExpanded('income-volatility') }">
+                    <div class="card-top" @click="toggleCard('income-volatility')">
                         <div class="icon-circle green">
                             <svg viewBox="0 0 24 24" class="card-icon" fill="none">
                                 <path d="M4 17H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -171,6 +144,9 @@
                             <p class="card-subtext">Highest and lowest earning months</p>
                         </div>
                     </div>
+                    <button class="collapse-button" @click.stop="toggleCard('income-volatility')" aria-label="Toggle income volatility section">
+                        {{ isExpanded('income-volatility') ? '−' : '+' }}
+                    </button>
 
                     <div v-if="incomeVolatilitySummary.hasData" class="stat-grid">
                         <div class="stat-card">
@@ -201,8 +177,8 @@
                     </button>
                 </section>
 
-                <section class="insight-bubble">
-                    <div class="card-top">
+                <section class="insight-bubble" :class="{ collapsed: !isExpanded('category-volatility') }">
+                    <div class="card-top" @click="toggleCard('category-volatility')">
                         <div class="icon-circle slate">
                             <svg viewBox="0 0 24 24" class="card-icon" fill="none">
                                 <path d="M4 19L10 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -219,6 +195,9 @@
                             <p class="card-subtext">Month-over-month swings by category</p>
                         </div>
                     </div>
+                    <button class="collapse-button" @click.stop="toggleCard('category-volatility')" aria-label="Toggle category volatility section">
+                        {{ isExpanded('category-volatility') ? '−' : '+' }}
+                    </button>
 
                     <div v-if="categoryVolatilitySummary.hasData" class="volatility-list">
                         <div v-for="item in categoryVolatilitySummary.volatile" :key="item.category" class="category-item">
@@ -245,8 +224,8 @@
                     </button>
                 </section>
 
-                <section class="insight-bubble">
-                    <div class="card-top">
+                <section class="insight-bubble" :class="{ collapsed: !isExpanded('recurring-expenses') }">
+                    <div class="card-top" @click="toggleCard('recurring-expenses')">
                         <div class="icon-circle red">
                             <svg viewBox="0 0 24 24" class="card-icon" fill="none">
                                 <rect x="5" y="4" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.8" />
@@ -261,6 +240,9 @@
                             <p class="card-subtext">Repeated same-amount charges by date</p>
                         </div>
                     </div>
+                    <button class="collapse-button" @click.stop="toggleCard('recurring-expenses')" aria-label="Toggle recurring expenses section">
+                        {{ isExpanded('recurring-expenses') ? '−' : '+' }}
+                    </button>
 
                     <div v-if="recurringExpenses.length" class="recurring-list">
                         <div v-for="item in recurringExpenses" :key="item.key" class="category-item">
@@ -285,8 +267,8 @@
                     </button>
                 </section>
 
-                <section class="insight-bubble">
-                    <div class="card-top">
+                <section class="insight-bubble" :class="{ collapsed: !isExpanded('weekday-spending') }">
+                    <div class="card-top" @click="toggleCard('weekday-spending')">
                         <div class="icon-circle blue">
                             <svg viewBox="0 0 24 24" class="card-icon" fill="none">
                                 <path d="M6 5V19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -300,6 +282,9 @@
                             <p class="card-subtext">Average expense and share by weekday</p>
                         </div>
                     </div>
+                    <button class="collapse-button" @click.stop="toggleCard('weekday-spending')" aria-label="Toggle weekday spending section">
+                        {{ isExpanded('weekday-spending') ? '−' : '+' }}
+                    </button>
 
                     <div v-if="hasWeekdayData" class="weekday-list">
                         <div v-for="day in weekdaySpending" :key="day.label" class="category-item">
@@ -325,103 +310,6 @@
                     </button>
                 </section>
 
-                <section class="insight-bubble">
-                    <div class="card-top">
-                        <div class="icon-circle deep-blue">
-                            <svg viewBox="0 0 24 24" class="card-icon" fill="none">
-                                <path d="M4 17H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                                <path d="M6 17V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                                <path d="M11 17V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                                <path d="M16 17V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <p class="card-label">SEASONAL SPENDING SPIKES</p>
-                            <p class="card-subtext">Average expense by month across years</p>
-                        </div>
-                    </div>
-
-                    <div class="trend-chart seasonal-chart">
-                        <div v-for="month in seasonalSpending" :key="month.label" class="trend-column">
-                            <p class="trend-value">{{ formatCompactCurrency(month.average) }}</p>
-                            <div class="trend-bar-track">
-                                <div class="trend-bar season" :style="{ height: `${month.heightPct}%` }"></div>
-                            </div>
-                            <p class="trend-label">{{ month.label }}</p>
-                        </div>
-                    </div>
-
-                    <button class="why-button" @click="openExplanation('seasonal-spending')">
-                        <svg class="why-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"></circle>
-                            <path d="M9.8 9.5C9.8 8.3 10.8 7.5 12 7.5C13.2 7.5 14.2 8.3 14.2 9.5C14.2 10.4 13.7 11 12.8 11.5C12.2 11.9 12 12.2 12 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-                            <circle cx="12" cy="16.5" r="1" fill="currentColor"></circle>
-                        </svg>
-                        Why this?
-                    </button>
-                </section>
-
-                <!-- Goal Insight Cards (F-G-03) -->
-                <section v-if="goalInsights.length" class="insight-bubble goal-section">
-                    <div class="card-top">
-                        <div class="icon-circle goal-icon">
-                            <svg viewBox="0 0 24 24" class="card-icon" fill="none">
-                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
-                                <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8" />
-                                <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                            </svg>
-                        </div>
-
-                        <div>
-                            <p class="card-label">FINANCIAL GOAL PROGRESS</p>
-                            <p class="card-subtext">How your spending aligns with your targets</p>
-                        </div>
-                    </div>
-
-                    <div class="goal-cards-list">
-                        <div v-for="gi in goalInsights" :key="gi.goal.id" class="goal-insight-card">
-                            <div class="goal-insight-header">
-                                <p class="goal-insight-name">{{ gi.goal.displayName }}</p>
-                                <span class="status-badge" :class="gi.statusClass">{{ gi.status }}</span>
-                            </div>
-                            <p class="goal-insight-statement">{{ gi.statement }}</p>
-                            <div class="goal-insight-numbers">
-                                <div class="goal-number-block">
-                                    <span class="goal-number-label">Actual</span>
-                                    <span class="goal-number-value">{{ formatCurrency(gi.actual) }}</span>
-                                </div>
-                                <div class="goal-number-block">
-                                    <span class="goal-number-label">Target</span>
-                                    <span class="goal-number-value">{{ formatCurrency(gi.goal.targetAmount) }}</span>
-                                </div>
-                            </div>
-                            <div class="progress-bar goal-progress-track">
-                                <div
-                                    class="progress-fill goal-fill goal-progress-fill"
-                                    :class="gi.statusClass"
-                                    :style="{ width: gi.progressWidth, minWidth: gi.progressWidth !== '0.0%' ? '4px' : '0' }"
-                                ></div>
-                            </div>
-                            <button class="why-button" @click="openGoalExplanation(gi)">
-                                <svg class="why-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"></circle>
-                                    <path d="M9.8 9.5C9.8 8.3 10.8 7.5 12 7.5C13.2 7.5 14.2 8.3 14.2 9.5C14.2 10.4 13.7 11 12.8 11.5C12.2 11.9 12 12.2 12 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-                                    <circle cx="12" cy="16.5" r="1" fill="currentColor"></circle>
-                                </svg>
-                                Why this?
-                            </button>
-                        </div>
-                    </div>
-
-                    <button class="adjust-goals-btn" @click="$router.push('/goals')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
-                        Manage Goals
-                    </button>
-                </section>
             </div>
         </main>
 
@@ -443,12 +331,6 @@
             @close="closeExplanation"
         />
 
-        <SpendingTrendsExplanation
-            v-if="activeExplanation === 'spending-trends'"
-            :trend-series="expenseTrendSeries"
-            :insight-text="spendingTrendInsight"
-            @close="closeExplanation"
-        />
 
         <IncomeVolatilityExplanation
             v-if="activeExplanation === 'income-volatility'"
@@ -480,23 +362,6 @@
             @close="closeExplanation"
         />
 
-        <SeasonalSpendingExplanation
-            v-if="activeExplanation === 'seasonal-spending'"
-            :seasonal-spending="seasonalSpending"
-            :summary="seasonalSpikeSummary"
-            :insight-text="seasonalSpendingInsight"
-            @close="closeExplanation"
-        />
-
-        <GoalInsightExplanation
-            v-if="activeExplanation === 'goal-insight' && selectedGoalInsight"
-            :goal="selectedGoalInsight.goal"
-            :actual="selectedGoalInsight.actual"
-            :status="selectedGoalInsight.status"
-            :period-label="periodLabel"
-            @close="closeExplanation"
-        />
-
         <BottomNav currentTab="insights" />
     </div>
 </template>
@@ -505,16 +370,12 @@
 import BottomNav from "@/components/BottomNav.vue"
 import NetCashFlowExplanation from "@/insight/NetCashFlowExplanation.vue"
 import TopSpendingCategoriesExplanation from "@/insight/TopSpendingCategoriesExplanation.vue"
-import SpendingTrendsExplanation from "@/insight/SpendingTrendsExplanation.vue"
 import IncomeVolatilityExplanation from "@/insight/IncomeVolatilityExplanation.vue"
 import CategoryVolatilityExplanation from "@/insight/CategoryVolatilityExplanation.vue"
 import RecurringExpensesExplanation from "@/insight/RecurringExpensesExplanation.vue"
 import WeekdaySpendingExplanation from "@/insight/WeekdaySpendingExplanation.vue"
-import SeasonalSpendingExplanation from "@/insight/SeasonalSpendingExplanation.vue"
-import GoalInsightExplanation from "@/insight/GoalInsightExplanation.vue"
 import { useTransactionsStore } from "@/stores/transactions"
 import { useAuthStore } from "@/stores/AuthStore"
-import { useGoalStore } from "@/stores/GoalStore"
 import { useCurrencyStore } from "@/stores/currency"
 
 const WEEKDAY_LABELS = [
@@ -527,50 +388,66 @@ const WEEKDAY_LABELS = [
     "Saturday"
 ]
 
-const MONTH_LABELS = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec"
-]
-
 export default {
     name: "Insights",
     components: {
         BottomNav,
         NetCashFlowExplanation,
         TopSpendingCategoriesExplanation,
-        SpendingTrendsExplanation,
         IncomeVolatilityExplanation,
         CategoryVolatilityExplanation,
         RecurringExpensesExplanation,
-        WeekdaySpendingExplanation,
-        SeasonalSpendingExplanation,
-        GoalInsightExplanation
+        WeekdaySpendingExplanation
     },
     setup() {
         const store = useTransactionsStore()
         const authStore = useAuthStore()
-        const goalStore = useGoalStore()
         const currencyStore = useCurrencyStore()
-        return { store, authStore, goalStore, currencyStore }
+        return { store, authStore, currencyStore }
     },
     data() {
+        const now = new Date()
         return {
-            selectedPeriod: "this-month",
+            selectedMonth: now.getMonth(),
+            selectedYear: now.getFullYear(),
             activeExplanation: null,
-            selectedGoalInsight: null
+            expandedCards: {
+                "net-cashflow": true,
+                "top-spending-categories": true,
+                "income-volatility": true,
+                "category-volatility": true,
+                "recurring-expenses": true,
+                "weekday-spending": true
+            }
         }
     },
     computed: {
+        monthOptions() {
+            return [
+                { value: 0, label: "January" },
+                { value: 1, label: "February" },
+                { value: 2, label: "March" },
+                { value: 3, label: "April" },
+                { value: 4, label: "May" },
+                { value: 5, label: "June" },
+                { value: 6, label: "July" },
+                { value: 7, label: "August" },
+                { value: 8, label: "September" },
+                { value: 9, label: "October" },
+                { value: 10, label: "November" },
+                { value: 11, label: "December" }
+            ]
+        },
+        availableYears() {
+            const currentYear = new Date().getFullYear()
+            const years = new Set([currentYear])
+
+            this.normalizedTransactions.forEach(transaction => {
+                years.add(transaction.parsedDate.getFullYear())
+            })
+
+            return Array.from(years).sort((a, b) => b - a)
+        },
         normalizedTransactions() {
             return this.store.transactions
                 .map(transaction => {
@@ -594,14 +471,9 @@ export default {
                 })
         },
         periodDates() {
-            const now = new Date()
-
-            if (this.selectedPeriod === "this-month") {
-                return { year: now.getFullYear(), month: now.getMonth() }
-            }
-
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-            return { year: lastMonth.getFullYear(), month: lastMonth.getMonth() }
+            const year = Number.isFinite(this.selectedYear) ? this.selectedYear : new Date().getFullYear()
+            const month = Number.isFinite(this.selectedMonth) ? this.selectedMonth : new Date().getMonth()
+            return { year, month }
         },
         periodLabel() {
             const { year, month } = this.periodDates
@@ -653,7 +525,7 @@ export default {
             }
 
             if (this.periodNetCashFlow >= 0) {
-                return "You kept money left over after expenses this month."
+                return "You kept money left over after expenses in this period."
             }
 
             return "Your expenses were higher than your income in this period."
@@ -703,51 +575,6 @@ export default {
             }
 
             return "Your spending is spread across categories rather than concentrated in one bucket, which suggests smaller improvements across multiple categories may work best."
-        },
-        expenseTrendSeries() {
-            const buckets = this.buildRecentMonthBuckets(12)
-            const bucketLookup = Object.fromEntries(buckets.map(bucket => [bucket.key, bucket]))
-
-            this.normalizedTransactions.forEach(transaction => {
-                if (transaction.normalizedType !== "expense") return
-                const key = this.buildMonthKey(transaction.parsedDate)
-                if (bucketLookup[key]) {
-                    bucketLookup[key].amount += transaction.normalizedAmount
-                }
-            })
-
-            const maxAmount = Math.max(...buckets.map(bucket => bucket.amount), 0)
-
-            return buckets.map(bucket => ({
-                ...bucket,
-                heightPct: maxAmount > 0 ? Number(((bucket.amount / maxAmount) * 100).toFixed(1)) : 0
-            }))
-        },
-        spendingTrendInsight() {
-            const hasData = this.expenseTrendSeries.some(point => point.amount > 0)
-            if (!hasData) {
-                return "No expense trend can be derived yet because there are not enough expense transactions in recent months."
-            }
-
-            const first = this.expenseTrendSeries[0]
-            const last = this.expenseTrendSeries[this.expenseTrendSeries.length - 1]
-            const delta = last.amount - first.amount
-
-            if (Math.abs(delta) < 1) {
-                return "Overall spending is relatively flat over the year, which suggests your total outflow is stable month to month."
-            }
-
-            if (first.amount <= 0 && last.amount > 0) {
-                return `Spending has ramped up recently, reaching ${this.formatCurrency(last.amount)} in ${last.longLabel}. Watch for early lifestyle creep.`
-            }
-
-            if (delta > 0) {
-                const growth = first.amount > 0 ? (delta / first.amount) * 100 : 0
-                return `Spending is trending upward by ${growth.toFixed(1)}% from ${first.longLabel} to ${last.longLabel}. This may indicate lifestyle creep.`
-            }
-
-            const decline = first.amount > 0 ? (Math.abs(delta) / first.amount) * 100 : 0
-            return `Spending has come down by ${decline.toFixed(1)}% from ${first.longLabel} to ${last.longLabel}, suggesting your recent budgeting changes are working.`
         },
         incomeTrendSeries() {
             const buckets = this.buildRecentMonthBuckets(12)
@@ -974,154 +801,18 @@ export default {
             }
 
             return `${topDay.label} has the heaviest spending pattern so far. Use this timing signal to set day-specific spending limits.`
-        },
-        seasonalSpending() {
-            const monthBuckets = MONTH_LABELS.map((label, index) => ({
-                label,
-                index,
-                total: 0,
-                years: new Set(),
-                average: 0,
-                heightPct: 0
-            }))
-
-            this.normalizedTransactions.forEach(transaction => {
-                if (transaction.normalizedType !== "expense") return
-
-                const monthIndex = transaction.parsedDate.getMonth()
-                const year = transaction.parsedDate.getFullYear()
-                monthBuckets[monthIndex].total += transaction.normalizedAmount
-                monthBuckets[monthIndex].years.add(year)
-            })
-
-            const withAverage = monthBuckets.map(bucket => {
-                const yearCount = bucket.years.size
-                const average = yearCount > 0 ? bucket.total / yearCount : 0
-                return {
-                    label: bucket.label,
-                    index: bucket.index,
-                    average,
-                    yearCount
-                }
-            })
-
-            const maxAverage = Math.max(...withAverage.map(bucket => bucket.average), 0)
-
-            return withAverage.map(bucket => ({
-                ...bucket,
-                heightPct: maxAverage > 0 ? Number(((bucket.average / maxAverage) * 100).toFixed(1)) : 0
-            }))
-        },
-        seasonalSpikeSummary() {
-            const activeMonths = this.seasonalSpending.filter(month => month.average > 0)
-            if (!activeMonths.length) {
-                return {
-                    hasData: false,
-                    peak: null,
-                    spikePct: 0
-                }
-            }
-
-            const peak = activeMonths.reduce((lead, month) => {
-                if (!lead || month.average > lead.average) return month
-                return lead
-            }, null)
-
-            const baseline = activeMonths.reduce((sum, month) => sum + month.average, 0) / activeMonths.length
-            const spikePct = baseline > 0 ? ((peak.average - baseline) / baseline) * 100 : 0
-
-            return {
-                hasData: true,
-                peak,
-                spikePct
-            }
-        },
-        seasonalSpendingInsight() {
-            if (!this.seasonalSpikeSummary.hasData) {
-                return "Seasonal patterns need at least one full cycle of expense data to become reliable."
-            }
-
-            const { peak, spikePct } = this.seasonalSpikeSummary
-
-            if (spikePct >= 35) {
-                return `${peak.label} shows the strongest seasonal spike, about ${spikePct.toFixed(1)}% above your monthly baseline. Plan ahead for this period next year.`
-            }
-
-            if (spikePct >= 15) {
-                return `${peak.label} is your highest seasonal month, with a moderate spike. A small pre-savings plan can smooth this peak.`
-            }
-
-            return "Seasonal spending is fairly even across months, with no major recurring spike period yet."
-        },
-        goalInsights() {
-            if (!this.goalStore.goals.length) return []
-
-            return this.goalStore.goals.map(goal => {
-                const formatted = this.goalStore.formattedGoals.find(g => g.id === goal.id) || goal
-                const periodTxns = this.periodTransactions.map(t => ({
-                    type: t.normalizedType,
-                    amount: t.normalizedAmount,
-                    category: t.normalizedCategory
-                }))
-                const actual = this.toSafeNumber(this.goalStore.goalActual(goal, periodTxns))
-                const target = this.toSafeNumber(goal.targetAmount)
-                const status = this.goalStore.goalStatus(actual, target)
-                const isSpending = goal.type !== 'Monthly Savings Target'
-
-                let statement
-                if (isSpending) {
-                    if (status === 'Exceeded') {
-                        statement = `${formatted.displayName} has been exceeded`
-                    } else if (status === 'At risk') {
-                        statement = `${formatted.displayName} is at risk`
-                    } else {
-                        statement = `${formatted.displayName} is on track`
-                    }
-                } else {
-                    if (status === 'Exceeded') {
-                        statement = `Savings target met!`
-                    } else if (status === 'At risk') {
-                        statement = `Savings target is within reach`
-                    } else {
-                        statement = `Savings target needs attention`
-                    }
-                }
-
-                let statusClass
-                if (status === 'Exceeded') {
-                    statusClass = isSpending ? 'exceeded' : 'met'
-                } else if (status === 'At risk') {
-                    statusClass = 'at-risk'
-                } else {
-                    statusClass = 'on-track'
-                }
-
-                let progressWidth
-                if (status === 'Exceeded') {
-                    progressWidth = '100%'
-                } else {
-                    const ratio = target > 0 ? (actual / target) * 100 : 0
-                    const pct = Number.isFinite(ratio) ? Math.max(0, Math.min(ratio, 100)) : 0
-                    progressWidth = `${pct.toFixed(1)}%`
-                }
-
-                return {
-                    goal: formatted,
-                    actual,
-                    status,
-                    statement,
-                    statusClass,
-                    progressWidth
-                }
-            })
         }
     },
     watch: {
+        availableYears(years) {
+            if (!years.includes(this.selectedYear)) {
+                this.selectedYear = years[0]
+            }
+        },
         "authStore.currentUserId": {
             immediate: true,
             handler(userId) {
                 this.store.fetchTransactions(userId)
-                this.goalStore.init(userId)
                 this.currencyStore.init(userId)
             }
         }
@@ -1132,11 +823,12 @@ export default {
         },
         closeExplanation() {
             this.activeExplanation = null
-            this.selectedGoalInsight = null
         },
-        openGoalExplanation(goalInsight) {
-            this.selectedGoalInsight = goalInsight
-            this.activeExplanation = 'goal-insight'
+        toggleCard(cardKey) {
+            this.expandedCards[cardKey] = !this.expandedCards[cardKey]
+        },
+        isExpanded(cardKey) {
+            return this.expandedCards[cardKey] !== false
         },
         getTransactionDate(transaction) {
             let date = transaction?.date
@@ -1234,13 +926,32 @@ export default {
 
 .page-header {
     padding: 20px;
-    border-bottom: 2px solid darkgray;
+    height: 76px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #dfe6e3;
+    background: #ffffff;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: nowrap;
 }
 
 .page-header h1 {
     margin: 0;
     font-size: 24px;
-    color: #111827;
+    color: #24302c;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 .page-content {
@@ -1249,27 +960,54 @@ export default {
 }
 
 .period-selector {
-    display: inline-flex;
+    display: flex;
+    flex-direction: row;
     gap: 8px;
-    background: #e5e7eb;
-    border-radius: 20px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: visible;
+    background: #edf6f2;
+    border: 1px solid #d4e4de;
+    border-radius: 999px;
     padding: 6px;
 }
 
-.period-btn {
-    border: none;
-    border-radius: 16px;
-    padding: 8px 14px;
+.period-select {
+    border: 1px solid #c6d8d1;
+    border-radius: 12px;
+    padding: 4px 8px;
+    height: 34px;
+    max-width: 130px;
     font-size: 13px;
     font-weight: 600;
-    color: #4b5563;
-    background: transparent;
+    color: #24302c;
+    background: #ffffff;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
-.period-btn.active {
-    background: #ffffff;
-    color: #1f2937;
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 900px) {
+    .header-controls {
+        width: auto;
+    }
+
+    .period-selector {
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+    }
 }
 
 .range-caption {
@@ -1295,12 +1033,35 @@ export default {
     border-radius: 20px;
     padding: 18px;
     box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+    position: relative;
 }
 
 .card-top {
     display: flex;
     align-items: center;
     gap: 10px;
+    cursor: pointer;
+    padding-right: 56px;
+}
+
+.collapse-button {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #4b5563;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.insight-bubble.collapsed > :not(.card-top):not(.collapse-button):not(.why-button) {
+    display: none;
 }
 
 .icon-circle {
@@ -1465,25 +1226,33 @@ export default {
 }
 
 .why-button {
-    width: 100%;
-    margin-top: 12px;
-    padding: 10px 0;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background: #f9fafb;
-    color: #6b7280;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+        width: 24px;
+        height: 24px;
+        margin: 0;
+        padding: 0;
+        border: 1px solid #d1d5db;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #4b5563;
+        font-size: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 18px;
+        right: 50px;
+}
+
+.why-button::after {
+        content: "?";
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
 }
 
 .why-icon {
-  width: 16px;
-  height: 16px;
+    display: none;
 }
 
 .empty-note {
@@ -1552,6 +1321,33 @@ export default {
 
 .seasonal-chart {
     margin-top: 10px;
+}
+
+.seasonal-line-svg {
+    width: 100%;
+    height: 170px;
+    display: block;
+}
+
+.seasonal-line {
+    stroke: #2563eb;
+}
+
+.seasonal-dot {
+    fill: #1d4ed8;
+}
+
+.seasonal-axis-labels {
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 3.89%;
+}
+
+.seasonal-axis-labels span {
+    text-align: center;
+    font-size: 10px;
+    color: #4b5563;
 }
 
 .trend-column {
@@ -1651,113 +1447,6 @@ export default {
     }
 }
 
-/* Goal Insight Cards (F-G-03) */
-.goal-section {
-    border: 1.5px solid #d1fae5;
-}
-
-.icon-circle.goal-icon {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.goal-cards-list {
-    margin-top: 14px;
-    display: grid;
-    gap: 10px;
-}
-
-.goal-insight-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    background: #f8fafc;
-    padding: 14px;
-}
-
-.goal-insight-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-}
-
-.goal-insight-name {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 700;
-    color: #1f2937;
-}
-
-.status-badge {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.status-badge.on-track {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.status-badge.at-risk {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.status-badge.exceeded {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.status-badge.met {
-    background: #d1fae5;
-    color: #065f46;
-}
-
-.goal-insight-statement {
-    margin: 8px 0 0;
-    font-size: 14px;
-    color: #374151;
-    font-weight: 500;
-}
-
-.goal-insight-numbers {
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.goal-number-block {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 10px;
-}
-
-.goal-number-label {
-    display: block;
-    font-size: 11px;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
-
-.goal-number-value {
-    display: block;
-    margin-top: 4px;
-    font-size: 16px;
-    font-weight: 800;
-    color: #111827;
-}
-
-.progress-fill.goal-fill.on-track {
-    background: linear-gradient(90deg, #4f8a73, #7cc39f);
-}
 
 .progress-fill.goal-fill.at-risk {
     background: linear-gradient(90deg, #f59e0b, #fbbf24);

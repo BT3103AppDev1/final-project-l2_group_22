@@ -18,18 +18,11 @@
     <main class="page-content">
       <div class="add-category-actions">
         <button
-          class="add-category-btn add-category-btn--expense"
+          class="add-category-btn"
           type="button"
-          @click="goToAddCategory('expense')"
+          @click="goToAddCategory()"
         >
-          + Add Expense Category
-        </button>
-        <button
-          class="add-category-btn add-category-btn--income"
-          type="button"
-          @click="goToAddCategory('income')"
-        >
-          + Add Income Category
+          + Add New Category
         </button>
       </div>
 
@@ -168,8 +161,8 @@ export default {
     goToAddTransaction() {
       this.$router.push("/add-transaction");
     },
-    goToAddCategory(type = "expense") {
-      this.$router.push({ path: "/add-category", query: { type } });
+    goToAddCategory() {
+      this.$router.push({ path: "/add-category" });
     },
     goToSettings() {
       this.$router.push("/settings");
@@ -234,6 +227,15 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  background: rgba(36, 48, 44, 0.06);
+}
+
+.icon-button:active {
+  background: rgba(36, 48, 44, 0.12);
 }
 
 .icon-button svg,
@@ -275,14 +277,9 @@ export default {
   font-family: "Poppins", sans-serif;
 }
 
-.add-category-btn--expense {
-  background: #fde8e8;
-  color: #9c2d2d;
-}
-
-.add-category-btn--income {
-  background: #e6f4ed;
-  color: #20603a;
+.add-category-btn {
+  background: #ecf4f1;
+  color: #2f6657;
 }
 
 .status-message {

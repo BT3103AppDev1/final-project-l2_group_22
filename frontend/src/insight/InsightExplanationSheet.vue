@@ -35,19 +35,18 @@ export default {
   background: rgba(15, 23, 42, 0.45);
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
   z-index: 100;
 }
 
 .sheet {
-  width: min(640px, 100%);
+  width: min(640px, 92%);
   max-height: 88vh;
   overflow-y: auto;
   background: #ffffff;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  border-radius: 16px;
   padding: 18px;
-  box-shadow: 0 -10px 28px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
 }
 
 .sheet-header {

@@ -588,6 +588,10 @@ const goToTransactions = () => {
   router.push('/transactions?tab=expense');
 };
 
+const hasSelectedPhoto = computed(() => {
+  return Boolean(selectedFile.value || backendResult.value);
+});
+
 onBeforeRouteLeave(async () => {
   await autoSaveUnconfirmedDraft();
 });
@@ -602,6 +606,11 @@ watch(
     ensureCategoriesLoaded();
   },
 );
+
+defineExpose({
+  isProcessing,
+  hasSelectedPhoto,
+});
 </script>
 
 <style scoped>

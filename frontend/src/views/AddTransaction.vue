@@ -1,8 +1,10 @@
 <template>
   <div class="web-page">
     <header class="page-header">
-      <button class="back-button" @click="goBack">
-        <span class="back-arrow">&#8592;</span>
+      <button class="icon-button" type="button" aria-label="Go back" @click="goBack">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
       </button>
       <h1>Add Transaction</h1>
       <div class="header-spacer"></div>
@@ -693,32 +695,36 @@ export default {
   justify-content: space-between;
 }
 
-.back-button {
+.icon-button {
   background: transparent;
   border: none;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
-  padding: 8px;
-  margin-left: -8px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 50%;
+  color: #344054;
   transition: all 0.2s;
 }
 
-.back-button:hover {
-  background: rgba(36, 48, 44, 0.05);
+.icon-button:hover {
+  background: rgba(36, 48, 44, 0.06);
 }
 
-.back-button:active {
-  background: rgba(36, 48, 44, 0.1);
+.icon-button:active {
+  background: rgba(36, 48, 44, 0.12);
 }
 
-.back-arrow {
-  font-size: 24px;
-  color: var(--text-900);
-  line-height: 1;
-  font-weight: 600;
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .page-header h1 {
@@ -730,6 +736,7 @@ export default {
 
 .header-spacer {
   width: 36px;
+  height: 36px;
 }
 
 .page-content {

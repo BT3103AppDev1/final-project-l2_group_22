@@ -2,16 +2,12 @@
   <div class="web-page">
     <header class="page-header">
       <div class="header-left">
-        <button @click="$router.back()" class="back-btn">←</button>
-        <h1>Goals</h1>
-      </div>
-      <div class="header-icons">
-        <button
-          class="icon-button"
-          @click="goalStore.init(authStore.currentUserId)"
-        >
-          🔄
+        <button class="icon-button" type="button" aria-label="Go back" @click="$router.back()">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
         </button>
+        <h1>Goals</h1>
       </div>
     </header>
 
@@ -399,7 +395,7 @@ const closeModal = () => {
   padding: 20px;
   border-bottom: 2px solid #dfe6e3;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 }
 
@@ -409,13 +405,36 @@ const closeModal = () => {
   gap: 16px;
 }
 
-.back-btn {
-  background: none;
+.icon-button {
+  width: 36px;
+  height: 36px;
+  background: transparent;
   border: none;
-  font-size: 28px;
   cursor: pointer;
-  color: var(--text-900);
+  color: #344054;
   padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  background: rgba(36, 48, 44, 0.06);
+}
+
+.icon-button:active {
+  background: rgba(36, 48, 44, 0.12);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .page-content {

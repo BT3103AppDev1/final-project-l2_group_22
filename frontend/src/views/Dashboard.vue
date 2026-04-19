@@ -2,42 +2,67 @@
   <div class="web-page">
     <header class="page-header">
       <h1>Dashboard</h1>
+
+      <div class="header-controls">
+        <div class="period-selector">
+          <div class="timeframe-group">
+            <button
+              class="period-btn"
+              :class="{ active: selectedTimeframe === 'custom', 'wide-btn': selectedTimeframe === 'custom' }"
+              @click="setTimeframe('custom')"
+            >Custom Range</button>
+            <button
+              class="period-btn"
+              :class="{ active: selectedTimeframe === 'month' }"
+              @click="setTimeframe('month')"
+            >Month</button>
+            <button
+              class="period-btn"
+              :class="{ active: selectedTimeframe === 'year' }"
+              @click="setTimeframe('year')"
+            >Year</button>
+          </div>
+
+          <div class="range-controls">
+
+            <template v-if="selectedTimeframe === 'custom'">
+              <label class="sr-only" for="dashboard-custom-start">Custom range start</label>
+              <input id="dashboard-custom-start" v-model="customStartDate" class="period-input" type="date" />
+
+              <label class="sr-only" for="dashboard-custom-end">Custom range end</label>
+              <input id="dashboard-custom-end" v-model="customEndDate" class="period-input" type="date" />
+            </template>
+
+            <template v-else-if="selectedTimeframe === 'month'">
+              <label class="sr-only" for="dashboard-month">Select month</label>
+              <select id="dashboard-month" v-model.number="selectedMonth" class="period-select">
+                <option v-for="option in monthOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+
+              <label class="sr-only" for="dashboard-month-year">Select year</label>
+              <select id="dashboard-month-year" v-model.number="selectedYear" class="period-select">
+                <option v-for="year in availableYears" :key="year" :value="year">
+                  {{ year }}
+                </option>
+              </select>
+            </template>
+
+            <template v-else>
+              <label class="sr-only" for="dashboard-year">Select year</label>
+              <select id="dashboard-year" v-model.number="selectedYear" class="period-select">
+                <option v-for="year in availableYears" :key="year" :value="year">
+                  {{ year }}
+                </option>
+              </select>
+            </template>
+          </div>
+        </div>
+      </div>
     </header>
 
     <main class="page-content">
-      <!-- Timeframe Selector -->
-      <div class="period-selector timeframe-selector">
-        <button
-          class="period-btn"
-          :class="{ active: selectedTimeframe === 'week' }"
-          @click="setTimeframe('week')"
-        >Week</button>
-        <button
-          class="period-btn"
-          :class="{ active: selectedTimeframe === 'month' }"
-          @click="setTimeframe('month')"
-        >Month</button>
-        <button
-          class="period-btn"
-          :class="{ active: selectedTimeframe === 'year' }"
-          @click="setTimeframe('year')"
-        >Year</button>
-      </div>
-
-      <!-- Period Selector -->
-      <div class="period-selector">
-        <button
-          class="period-btn"
-          :class="{ active: selectedPeriod === 'current' }"
-          @click="selectedPeriod = 'current'"
-        >{{ periodLabels.current }}</button>
-        <button
-          class="period-btn"
-          :class="{ active: selectedPeriod === 'previous' }"
-          @click="selectedPeriod = 'previous'"
-        >{{ periodLabels.previous }}</button>
-      </div>
-
       <!-- Loading State -->
       <div v-if="store.loading" class="loading-message">Loading…</div>
 
@@ -162,6 +187,21 @@ import { useAuthStore } from "@/stores/AuthStore"
 import { useGoalStore } from "@/stores/GoalStore"
 import { useCurrencyStore } from "@/stores/currency"
 
+const MONTH_OPTIONS = [
+  { value: 0, label: 'January' },
+  { value: 1, label: 'February' },
+  { value: 2, label: 'March' },
+  { value: 3, label: 'April' },
+  { value: 4, label: 'May' },
+  { value: 5, label: 'June' },
+  { value: 6, label: 'July' },
+  { value: 7, label: 'August' },
+  { value: 8, label: 'September' },
+  { value: 9, label: 'October' },
+  { value: 10, label: 'November' },
+  { value: 11, label: 'December' }
+]
+
 export default {
   name: "Dashboard",
   components: {
@@ -177,37 +217,58 @@ export default {
   },
 
   data() {
+    const now = new Date()
+    const previousWeek = new Date(now)
+    previousWeek.setDate(previousWeek.getDate() - 6)
     return {
       selectedTimeframe: 'month',
-      selectedPeriod: 'current'
+      selectedMonth: now.getMonth(),
+      selectedYear: now.getFullYear(),
+      customStartDate: this.formatDateForInput(previousWeek),
+      customEndDate: this.formatDateForInput(now)
     }
   },
 
   computed: {
+    monthOptions() {
+      return MONTH_OPTIONS
+    },
+
+    availableYears() {
+      const currentYear = new Date().getFullYear()
+      const years = new Set([currentYear])
+
+      this.store.transactions.forEach((transaction) => {
+        const date = this.getTransactionDate(transaction)
+        if (!date || Number.isNaN(date.getTime())) return
+        years.add(date.getFullYear())
+      })
+
+      return Array.from(years).sort((a, b) => b - a)
+    },
+
     recentTransactions() {
       return this.store.transactions.slice(0, 5)
     },
 
-    periodLabels() {
-      const labels = {
-        week: { current: 'This week', previous: 'Last week' },
-        month: { current: 'This month', previous: 'Last month' },
-        year: { current: 'This year', previous: 'Last year' }
-      }
-      return labels[this.selectedTimeframe]
-    },
-
     periodRange() {
       const now = new Date()
-      const isCurrent = this.selectedPeriod === 'current'
+      const selectedYear = Number.isFinite(this.selectedYear) ? this.selectedYear : now.getFullYear()
+      const selectedMonth = Number.isFinite(this.selectedMonth) ? this.selectedMonth : now.getMonth()
 
-      if (this.selectedTimeframe === 'week') {
-        const currentWeekStart = this.startOfWeek(now)
-        const start = new Date(currentWeekStart)
-        start.setDate(currentWeekStart.getDate() + (isCurrent ? 0 : -7))
+      if (this.selectedTimeframe === 'custom') {
+        if (!this.customStartDate || !this.customEndDate) {
+          return { start: null, end: null }
+        }
 
-        const end = new Date(start)
-        end.setDate(start.getDate() + 6)
+        const startDate = new Date(this.customStartDate)
+        const endDate = new Date(this.customEndDate)
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+          return { start: null, end: null }
+        }
+
+        const start = startDate <= endDate ? startDate : endDate
+        const end = startDate <= endDate ? endDate : startDate
 
         return {
           start: this.startOfDay(start),
@@ -216,16 +277,14 @@ export default {
       }
 
       if (this.selectedTimeframe === 'year') {
-        const year = now.getFullYear() - (isCurrent ? 0 : 1)
         return {
-          start: new Date(year, 0, 1, 0, 0, 0, 0),
-          end: new Date(year, 11, 31, 23, 59, 59, 999)
+          start: new Date(selectedYear, 0, 1, 0, 0, 0, 0),
+          end: new Date(selectedYear, 11, 31, 23, 59, 59, 999)
         }
       }
 
-      const monthOffset = isCurrent ? 0 : -1
-      const start = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1)
-      const end = new Date(now.getFullYear(), now.getMonth() + monthOffset + 1, 0)
+      const start = new Date(selectedYear, selectedMonth, 1)
+      const end = new Date(selectedYear, selectedMonth + 1, 0)
 
       return {
         start: this.startOfDay(start),
@@ -235,6 +294,7 @@ export default {
 
     periodTransactions() {
       const { start, end } = this.periodRange
+      if (!start || !end) return []
       return this.store.transactions.filter(t => {
         const d = this.getTransactionDate(t)
         if (!d) return false
@@ -282,6 +342,12 @@ export default {
   },
 
   watch: {
+    availableYears(years) {
+      if (!years.includes(this.selectedYear)) {
+        this.selectedYear = years[0]
+      }
+    },
+
     'authStore.currentUserId': {
       immediate: true,
       handler(userId) {
@@ -295,7 +361,13 @@ export default {
   methods: {
     setTimeframe(timeframe) {
       this.selectedTimeframe = timeframe
-      this.selectedPeriod = 'current'
+    },
+
+    formatDateForInput(date) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
     },
 
     formatCurrency(amount) {
@@ -438,8 +510,16 @@ export default {
 
 .page-header {
   padding: 20px;
-  border-bottom: 2px solid darkgray;
+  height: 76px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--border);
   background: white;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: nowrap;
 }
 
 .page-header h1 {
@@ -447,6 +527,18 @@ export default {
   font-size: 24px;
   color: var(--text-900);
   font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+}
+
+.header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .page-content {
@@ -706,36 +798,127 @@ export default {
 /* Period Selector */
 .period-selector {
   display: flex;
+  flex-direction: row;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: visible;
+  min-width: 0;
+  background: #edf6f2;
+  border: 1px solid #d4e4de;
+  border-radius: 999px;
+  padding: 6px;
 }
 
-.timeframe-selector {
-  margin-bottom: 12px;
+.timeframe-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.range-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
 .period-btn {
-  padding: 8px 20px;
+  padding: 6px 12px;
+  height: 34px;
   border-radius: 20px;
-  border: 1.5px solid var(--border);
-  background: white;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text-700);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   font-family: 'Poppins', sans-serif;
   transition: all 0.2s;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.period-btn.wide-btn {
+  min-width: 138px;
 }
 
 .period-btn.active {
-  background: var(--brand);
+  background: #5e9486;
   color: white;
-  border-color: var(--brand);
+  border-color: #5e9486;
+  box-shadow: 0 1px 3px rgba(37, 70, 61, 0.28);
 }
 
 .period-btn:hover:not(.active) {
-  border-color: var(--brand);
-  color: var(--brand);
+  background: #ffffff;
+  border-color: #bfd4cc;
+  color: #2f5a4e;
+}
+
+.period-filter {
+  align-items: center;
+}
+
+.period-input {
+  padding: 0 8px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid #c6d8d1;
+  background: white;
+  color: #24302c;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  width: 130px;
+  max-width: 130px;
+  box-sizing: border-box;
+}
+
+.period-select {
+  padding: 0 8px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid #c6d8d1;
+  background: white;
+  color: #24302c;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  box-sizing: border-box;
+  min-width: 90px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .header-controls {
+    align-items: center;
+    width: auto;
+  }
+
+  .period-selector {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+  }
+
+  .timeframe-group,
+  .range-controls {
+    flex-wrap: nowrap;
+  }
 }
 
 /* Goals Section */

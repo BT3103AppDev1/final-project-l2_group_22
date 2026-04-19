@@ -1,7 +1,7 @@
 <template>
   <div class="web-page">
     <header class="edit-header">
-      <button class="icon-btn" @click="$router.back()">
+      <button class="icon-btn" type="button" aria-label="Go back" @click="$router.back()">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -26,10 +26,12 @@
 
     <main v-else class="page-content">
       <div class="form-group">
-        <label class="form-label">Type</label>
-        <div class="readonly-type" :class="form.type">
-          {{ form.type === "income" ? "Income" : "Expense" }}
-        </div>
+        <p class="form-label type-line">
+          Type:
+          <span class="type-value" :class="form.type">
+            {{ form.type === "income" ? "Income" : "Expense" }}
+          </span>
+        </p>
       </div>
 
       <div class="form-group">
@@ -390,16 +392,35 @@ export default {
 }
 
 .icon-btn {
-  background: none;
+  background: transparent;
   border: none;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
-  padding: 4px;
-  color: #24302c;
+  padding: 0;
+  border-radius: 50%;
+  color: #344054;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(36, 48, 44, 0.06);
+}
+
+.icon-btn:active {
+  background: rgba(36, 48, 44, 0.12);
 }
 
 .icon-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .save-btn {
@@ -445,24 +466,21 @@ export default {
   color: #d9534f;
 }
 
-.readonly-type {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #dfe6e3;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  font-family: "Poppins", sans-serif;
-  background: #f8faf9;
-  color: #24302c;
-  box-sizing: border-box;
+.type-line {
+  margin: 0;
 }
 
-.readonly-type.expense {
+.type-value {
+  margin-left: 6px;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.type-value.expense {
   color: #d9534f;
 }
 
-.readonly-type.income {
+.type-value.income {
   color: #2d8a4f;
 }
 

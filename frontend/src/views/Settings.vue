@@ -44,10 +44,6 @@
                 {{ currency.code }} - {{ currency.label }}
               </option>
             </select>
-
-            <button class="refresh-rate-btn" :disabled="currencyStore.isLoading" @click="refreshRate">
-              {{ currencyStore.isLoading ? '...' : 'Refresh' }}
-            </button>
           </div>
         </div>
 
@@ -148,51 +144,6 @@
           </svg>
         </button>
 
-        <button class="menu-item">
-          <div class="menu-left">
-            <div class="menu-icon-circle">
-              <svg
-                class="menu-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 6C9.8 6 8 7.8 8 10V11L6.5 13.5V14H17.5V13.5L16 11V10C16 7.8 14.2 6 12 6Z"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linejoin="round"
-                ></path>
-                <path
-                  d="M10.5 17C10.8 17.6 11.3 18 12 18C12.7 18 13.2 17.6 13.5 17"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                ></path>
-              </svg>
-            </div>
-
-            <div class="menu-text">
-              <p class="menu-title">Notifications</p>
-              <p class="menu-subtext">Push notifications and alerts</p>
-            </div>
-          </div>
-
-          <svg
-            class="menu-arrow"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M10 7L15 12L10 17"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></path>
-          </svg>
-        </button>
       </div>
 
       <p class="desc">Account</p>
@@ -248,43 +199,12 @@
           </svg>
         </button>
 
-        <button class="menu-item" @click="$router.push('/change-email')">
-          <div class="menu-left">
-            <div class="menu-icon-circle">
-              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M3 7l9 5 9-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="menu-text">
-              <p class="menu-title">Change Email</p>
-              <p class="menu-subtext">Update your sign-in email address</p>
-            </div>
-          </div>
-          <svg class="menu-arrow" viewBox="0 0 24 24" fill="none"><path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        </button>
-
-        <button class="menu-item" @click="$router.push('/reset-password')">
-          <div class="menu-left">
-            <div class="menu-icon-circle">
-              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M8 11V7a4 4 0 1 1 8 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <div class="menu-text">
-              <p class="menu-title">Reset Password</p>
-              <p class="menu-subtext">Send a password reset link to your email</p>
-            </div>
-          </div>
-          <svg class="menu-arrow" viewBox="0 0 24 24" fill="none"><path d="M10 7L15 12L10 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        </button>
       </div>
 
       <p class="desc">Support</p>
 
       <div class="content settings-group">
-        <button class="menu-item">
+        <button class="menu-item" @click="showHelpCenter = true">
           <div class="menu-left">
             <div class="menu-icon-circle">
               <svg
@@ -335,7 +255,7 @@
           </svg>
         </button>
 
-        <button class="menu-item">
+        <div class="menu-item menu-item--static" aria-disabled="true">
           <div class="menu-left">
             <div class="menu-icon-circle">
               <svg
@@ -376,26 +296,20 @@
               <p class="menu-subtext">Version 1.0</p>
             </div>
           </div>
-
-          <svg
-            class="menu-arrow"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M10 7L15 12L10 17"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></path>
-          </svg>
-        </button>
+        </div>
       </div>
     </main>
 
-    <BottomNav currentTab="settings" />
+    <div v-if="showHelpCenter" class="modal-overlay" @click.self="showHelpCenter = false">
+      <div class="help-modal" role="dialog" aria-modal="true" aria-label="Help center">
+        <h2>Help Center</h2>
+        <p>Need support? Email our team and we will get back to you.</p>
+        <a class="help-email-link" href="mailto:groupl22bt3103@gmail.com">groupl22bt3103@gmail.com</a>
+        <button class="help-close-btn" @click="showHelpCenter = false">Close</button>
+      </div>
+    </div>
+
+    <BottomNav currentTab="settings" :disableNavigation="currencyStore.isLoading" />
   </div>
 </template>
 
@@ -415,6 +329,12 @@ export default {
     const authStore = useAuthStore();
     const currencyStore = useCurrencyStore();
     return { authStore, currencyStore };
+  },
+
+  data() {
+    return {
+      showHelpCenter: false,
+    };
   },
 
   computed: {
@@ -439,10 +359,6 @@ export default {
     async handleCurrencyChange(nextCurrency) {
       await this.currencyStore.setSelectedCurrency(nextCurrency, this.authStore.currentUserId);
     },
-
-    async refreshRate() {
-      await this.currencyStore.refreshExchangeRate(this.currencyStore.selectedCurrency);
-    },
   },
 };
 </script>
@@ -458,13 +374,20 @@ export default {
 
 .page-header {
   padding: 20px;
-  border-bottom: 2px solid darkgray;
+  height: 76px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #dfe6e3;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
 }
 
 .page-header h1 {
   margin: 0;
   font-size: 24px;
-  color: black;
+  color: #24302c;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
 }
 
 .page-content {
@@ -521,24 +444,12 @@ export default {
   background: #fff;
 }
 
-.refresh-rate-btn {
-  border: 1px solid #d8dde3;
-  border-radius: 10px;
-  background: #f8fafc;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-
-.refresh-rate-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .menu-item + .menu-item {
   border-top: 1px solid #ececec;
+}
+
+.menu-item--static {
+  cursor: default;
 }
 
 .menu-left {
@@ -606,5 +517,51 @@ export default {
 .info-icon {
   width: 30px;
   height: 30px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.help-modal {
+  width: min(420px, 92%);
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.help-modal h2 {
+  margin: 0;
+  color: #2f3640;
+}
+
+.help-modal p {
+  margin: 12px 0 18px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.help-email-link {
+  color: #1f2937;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.help-close-btn {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  margin-top: 10px;
+  padding: 10px;
+  cursor: pointer;
 }
 </style>

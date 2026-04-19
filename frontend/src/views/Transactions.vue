@@ -5,13 +5,12 @@
             <div class="header-controls">
                 <button
                     class="header-action-btn"
-                    :class="{ active: monthFilterEnabled }"
-                    :aria-pressed="monthFilterEnabled"
-                    title="Toggle current month filter"
-                    @click="toggleMonthFilter"
+                    :class="{ active: hasActiveFilters }"
+                    :aria-pressed="hasActiveFilters"
+                    title="Open transaction filters"
+                    @click="openFilterModal"
                 >
-                    <span class="action-icon">📅</span>
-                    <span class="action-text">{{ monthFilterEnabled ? 'This Month' : 'All Time' }}</span>
+                    <span class="action-text">Filter</span>
                 </button>
                 <button
                     class="header-action-btn"
@@ -36,40 +35,28 @@
                     title="Delete transactions by time period"
                     @click="openWipeModal"
                 >
-                    <span class="action-icon">🗑</span>
-                    <span class="action-text">Wipe by Time</span>
+                    <span class="action-text">Mass Delete</span>
                 </button>
             </div>
         </header>
 
-        <div class="tab-bar">
-            <div class="tab-container">
-                <button
-                    class="tab-button"
-                    :class="{ active: activeTab === 'expense' }"
-                    @click="activeTab = 'expense'"
-                >
-                    Expenses
-                </button>
-                <button
-                    class="tab-button"
-                    :class="{ active: activeTab === 'income' }"
-                    @click="activeTab = 'income'"
-                >
-                    Income
-                </button>
-            </div>
-        </div>
-
         <main class="page-content">
             <div v-if="store.loading" class="loading-message">Loading…</div>
-            <ul v-else-if="filteredTransactions.length > 0" class="transactions-list">
-                <li v-for="transaction in filteredTransactions" :key="transaction.id" class="transaction-list-item">
-                    <TransactionItem :transaction="transaction" />
-                </li>
-            </ul>
-            <EmptyState v-else :activeTab="activeTab" />
-            <button class="fab" @click="$router.push(`/transactions/add?type=${activeTab}`)">+</button>
+            <div v-else-if="groupedTransactions.length > 0" class="transactions-list">
+                <section v-for="group in groupedTransactions" :key="group.key" class="date-group">
+                    <div class="date-separator">
+                        <span>{{ group.label }}</span>
+                    </div>
+
+                    <ul class="date-group-list">
+                        <li v-for="transaction in group.items" :key="transaction.id" class="transaction-list-item">
+                            <TransactionItem :transaction="transaction" />
+                        </li>
+                    </ul>
+                </section>
+            </div>
+            <EmptyState v-else :activeTab="emptyStateTab" />
+            <button class="fab" @click="$router.push(`/transactions/add?type=${addTransactionType}`)">+</button>
         </main>
 
         <div v-if="showExportModal" class="modal-overlay" @click.self="closeExportModal">
@@ -123,6 +110,104 @@
                     >
                         {{ isExporting ? 'Exporting...' : 'Export' }}
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showFilterModal" class="modal-overlay" @click.self="closeFilterModal">
+            <div class="filter-drawer" role="dialog" aria-modal="true">
+                <div class="filter-header">
+                    <h3>Filters</h3>
+                    <button class="close-icon-btn" @click="closeFilterModal">✕</button>
+                </div>
+
+                <div class="filter-body">
+                    <section class="filter-section">
+                        <h4>Timeframe</h4>
+                        <div class="segmented-control">
+                            <button :class="{ active: filterDateMode === 'all' }" @click="filterDateMode = 'all'">All Time</button>
+                            <button :class="{ active: filterDateMode === 'custom' }" @click="filterDateMode = 'custom'">Custom Range</button>
+                        </div>
+
+                        <div v-if="filterDateMode === 'custom'" class="input-grid mt-2">
+                            <div class="input-field">
+                                <label>From</label>
+                                <input v-model="filterStartDate" type="date" />
+                            </div>
+                            <div class="input-field">
+                                <label>To</label>
+                                <input v-model="filterEndDate" type="date" />
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="filter-section">
+                        <h4>Transaction Type</h4>
+                        <div class="chip-group">
+                            <label class="chip">
+                                <input type="checkbox" value="expense" v-model="selectedTypes" />
+                                <span>Expense</span>
+                            </label>
+                            <label class="chip">
+                                <input type="checkbox" value="income" v-model="selectedTypes" />
+                                <span>Income</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="filter-section">
+                        <div class="section-header">
+                            <h4>Categories</h4>
+                            <button type="button" class="btn-link" @click="selectedCategories = []">Clear</button>
+                        </div>
+
+                        <div class="category-grid">
+                            <label v-for="category in availableCategories" :key="category" class="category-card">
+                                <input type="checkbox" :value="category" v-model="selectedCategories" />
+                                <div class="card-content">
+                                    <span class="category-name">{{ category }}</span>
+                                    <div class="check-badge">✓</div>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="filter-section">
+                        <h4>Amount Range</h4>
+                        <div class="input-grid">
+                            <div class="input-group-prefix">
+                                <span>$</span>
+                                <input v-model="amountMin" type="number" placeholder="Min" />
+                            </div>
+                            <div class="input-group-prefix">
+                                <span>$</span>
+                                <input v-model="amountMax" type="number" placeholder="Max" />
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="filter-section grid-2">
+                        <div class="input-field">
+                            <h4>Merchant</h4>
+                            <input v-model.trim="merchantFilter" type="text" placeholder="e.g. Amazon" />
+                        </div>
+                        <div class="input-field">
+                            <h4>Recurrence</h4>
+                            <select v-model="recurrenceFilter">
+                                <option value="all">All</option>
+                                <option value="none">One-time</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="filter-footer">
+                    <button class="btn-text" @click="resetFilters">Clear All</button>
+                    <button class="btn-primary" @click="closeFilterModal">Show Results</button>
                 </div>
             </div>
         </div>
@@ -213,8 +298,16 @@ export default {
     },
     data() {
         return {
-            activeTab: 'expense',
-            monthFilterEnabled: false,
+            showFilterModal: false,
+            filterDateMode: 'all',
+            filterStartDate: '',
+            filterEndDate: '',
+            selectedTypes: ['expense', 'income'],
+            selectedCategories: [],
+            amountMin: '',
+            amountMax: '',
+            recurrenceFilter: 'all',
+            merchantFilter: '',
             sortDirection: 'desc',
             showExportModal: false,
             exportScope: 'all_time',
@@ -234,26 +327,103 @@ export default {
         }
     },
     computed: {
+        hasActiveFilters() {
+            const hasCustomDate = this.filterDateMode === 'custom' && (this.filterStartDate || this.filterEndDate)
+            const hasTypeFilter = this.selectedTypes.length > 0 && this.selectedTypes.length < 2
+            const hasCategories = this.selectedCategories.length > 0
+            const hasAmount = this.amountMin !== '' || this.amountMax !== ''
+            const hasRecurrence = this.recurrenceFilter !== 'all'
+            const hasMerchant = this.merchantFilter.length > 0
+
+            return hasCustomDate || hasTypeFilter || hasCategories || hasAmount || hasRecurrence || hasMerchant
+        },
+        availableCategories() {
+            const categories = new Set()
+            this.store.transactions.forEach((transaction) => {
+                if (transaction?.category) {
+                    categories.add(transaction.category)
+                }
+            })
+            return Array.from(categories).sort()
+        },
+        emptyStateTab() {
+            return this.selectedTypes.length === 1 && this.selectedTypes[0] === 'income' ? 'income' : 'expense'
+        },
+        addTransactionType() {
+            return this.selectedTypes.length === 1 && this.selectedTypes[0] === 'income' ? 'income' : 'expense'
+        },
         filteredTransactions() {
-            const now = new Date()
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-            const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+            const startDate = this.filterStartDate ? new Date(this.filterStartDate) : null
+            const endDate = this.filterEndDate ? new Date(this.filterEndDate) : null
+            const minAmount = this.amountMin === '' ? null : Number(this.amountMin)
+            const maxAmount = this.amountMax === '' ? null : Number(this.amountMax)
+            const merchantQuery = this.merchantFilter.toLowerCase()
 
             return this.store.transactions
-                .filter(t => t.type === this.activeTab)
                 .filter(t => {
-                    if (!this.monthFilterEnabled) {
-                        return true
+                    if (!this.selectedTypes.length) return false
+                    return this.selectedTypes.includes(t.type)
+                })
+                .filter(t => {
+                    const date = this.getTransactionDate(t)
+
+                    if (this.filterDateMode === 'custom') {
+                        if (startDate && date < new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0, 0)) {
+                            return false
+                        }
+
+                        if (endDate && date > new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999)) {
+                            return false
+                        }
                     }
 
-                    const date = this.getTransactionDate(t)
-                    return date >= monthStart && date <= monthEnd
+                    return true
+                })
+                .filter(t => {
+                    if (!this.selectedCategories.length) return true
+                    return this.selectedCategories.includes(t.category)
+                })
+                .filter(t => {
+                    const amount = Number(t.amount || 0)
+                    if (minAmount !== null && Number.isFinite(minAmount) && amount < minAmount) return false
+                    if (maxAmount !== null && Number.isFinite(maxAmount) && amount > maxAmount) return false
+                    return true
+                })
+                .filter(t => {
+                    if (this.recurrenceFilter === 'all') return true
+                    const recurrence = String(t?.recurrence || 'none').toLowerCase()
+                    return recurrence === this.recurrenceFilter
+                })
+                .filter(t => {
+                    if (!merchantQuery) return true
+                    const merchant = String(t?.merchant || '').toLowerCase()
+                    return merchant.includes(merchantQuery)
                 })
                 .sort((a, b) => {
                     const aTime = this.getTransactionDate(a).getTime()
                     const bTime = this.getTransactionDate(b).getTime()
                     return this.sortDirection === 'desc' ? bTime - aTime : aTime - bTime
                 })
+        },
+        groupedTransactions() {
+            const groups = new Map()
+
+            this.filteredTransactions.forEach((transaction) => {
+                const date = this.getTransactionDate(transaction)
+                const key = this.getDateKey(date)
+
+                if (!groups.has(key)) {
+                    groups.set(key, {
+                        key,
+                        label: this.formatDateHeader(date),
+                        items: []
+                    })
+                }
+
+                groups.get(key).items.push(transaction)
+            })
+
+            return Array.from(groups.values())
         },
         currentWipeRange() {
             const now = new Date()
@@ -431,8 +601,22 @@ export default {
         }
     },
     methods: {
-        toggleMonthFilter() {
-            this.monthFilterEnabled = !this.monthFilterEnabled
+        openFilterModal() {
+            this.showFilterModal = true
+        },
+        closeFilterModal() {
+            this.showFilterModal = false
+        },
+        resetFilters() {
+            this.filterDateMode = 'all'
+            this.filterStartDate = ''
+            this.filterEndDate = ''
+            this.selectedTypes = ['expense', 'income']
+            this.selectedCategories = []
+            this.amountMin = ''
+            this.amountMax = ''
+            this.recurrenceFilter = 'all'
+            this.merchantFilter = ''
         },
         toggleSortDirection() {
             this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc'
@@ -491,7 +675,9 @@ export default {
         },
         openWipeModal() {
             this.showWipeModal = true
-            this.wipeType = this.activeTab
+            if (this.selectedTypes.length === 1 && (this.selectedTypes[0] === 'expense' || this.selectedTypes[0] === 'income')) {
+                this.wipeType = this.selectedTypes[0]
+            }
             this.wipeError = ''
         },
         closeWipeModal(force = false) {
@@ -545,6 +731,20 @@ export default {
             }
 
             return new Date(0)
+        },
+        getDateKey(date) {
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            return `${year}-${month}-${day}`
+        },
+        formatDateHeader(date) {
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })
         }
     },
     watch: {
@@ -558,7 +758,10 @@ export default {
     mounted() {
         this.store.fetchTransactions(this.authStore.currentUserId)
         if (this.$route.query.tab === 'income') {
-            this.activeTab = 'income'
+            this.selectedTypes = ['income']
+        }
+        if (this.$route.query.tab === 'expense') {
+            this.selectedTypes = ['expense']
         }
         // Scroll to top when returning from add transaction
         window.scrollTo(0, 0)
@@ -597,24 +800,31 @@ html {
 
 .page-header {
     padding: 20px;
-    border-bottom: 2px solid darkgray;
+    height: 76px;
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
+    background: #ffffff;
 }
 
 .page-header h1 {
     margin: 0;
     font-size: 24px;
     color: var(--text-900);
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
 }
 
 .header-controls {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-end;
+    max-width: 100%;
+    overflow-x: auto;
 }
 
 .header-action-btn {
@@ -673,40 +883,6 @@ html {
     white-space: nowrap;
 }
 
-.tab-bar {
-    display: flex;
-    justify-content: center;
-    padding: 16px 20px;
-    background: white;
-    border-bottom: 1px solid var(--border);
-}
-
-.tab-container {
-    display: inline-flex;
-    gap: 8px;
-    background: #f0f0f0;
-    padding: 6px;
-    border-radius: 24px;
-}
-
-.tab-button {
-    border: none;
-    background: transparent;
-    padding: 10px 24px;
-    color: var(--text-700);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: 20px;
-    transition: all 0.2s;
-}
-
-.tab-button.active {
-    color: var(--text-900);
-    background: white;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
 .page-content {
     padding: 20px;
     flex: 1;
@@ -721,11 +897,33 @@ html {
 }
 
 .transactions-list {
-    list-style: none;
     padding: 0;
     margin: 0;
     height: calc(100vh - 320px);
     min-height: 400px;
+    overflow-y: auto;
+}
+
+.date-group {
+    margin: 0 0 14px;
+}
+
+.date-separator {
+    margin: 14px 0 8px;
+}
+
+.date-separator span {
+    display: inline-block;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #34423d;
+}
+
+.date-group-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .transaction-list-item {
@@ -783,6 +981,308 @@ html {
     padding: 18px;
 }
 
+.filter-drawer {
+    width: min(100%, 620px);
+    max-height: min(88vh, 760px);
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8e5;
+    box-shadow: 0 12px 28px rgba(23, 34, 29, 0.22);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid #e7efeb;
+}
+
+.filter-header h3 {
+    margin: 0;
+    color: var(--text-900);
+    font-size: 20px;
+}
+
+.close-icon-btn {
+    border: 1px solid #d7e1dd;
+    background: #ffffff;
+    color: #4e5f58;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.filter-body {
+    padding: 14px 18px;
+    overflow-y: auto;
+    display: grid;
+    gap: 12px;
+}
+
+.filter-section {
+    border: 1px solid #e6efeb;
+    border-radius: 12px;
+    background: #f8fbfa;
+    padding: 12px;
+}
+
+.filter-section h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #32403b;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.btn-link {
+    border: 0;
+    background: transparent;
+    color: #007bff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.segmented-control {
+    display: inline-flex;
+    gap: 6px;
+    background: #e8f1ee;
+    border: 1px solid #d7e6df;
+    border-radius: 999px;
+    padding: 4px;
+}
+
+.segmented-control button {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #49635a;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.segmented-control button.active {
+    background: #5e9486;
+    color: #ffffff;
+}
+
+.mt-2 {
+    margin-top: 10px;
+}
+
+.chip-group {
+    display: inline-flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.chip input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chip span {
+    border: 1px solid #d2ddd8;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #355148;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.chip input:checked + span {
+    border-color: #5e9486;
+    background: #eaf5f1;
+    color: #27463c;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.category-card {
+    cursor: pointer;
+    position: relative;
+}
+
+.category-card input {
+    display: none;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 10px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    text-align: center;
+    min-height: 100px;
+}
+
+.category-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.check-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #007bff;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: 0.2s ease;
+}
+
+.category-card input:checked + .card-content {
+    background: #eef6ff;
+    border-color: #007bff;
+}
+
+.category-card input:checked + .card-content .category-name {
+    color: #007bff;
+}
+
+.category-card input:checked + .card-content .check-badge {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@media (hover: hover) {
+    .category-card:hover .card-content {
+        border-color: #dee2e6;
+        background: #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #32403b;
+}
+
+.input-field input,
+.input-field select {
+    border: 1px solid #d3ddd9;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: #ffffff;
+}
+
+.input-group-prefix {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d3ddd9;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0 10px;
+}
+
+.input-group-prefix > span {
+    font-size: 13px;
+    color: #5b6a64;
+    margin-right: 6px;
+}
+
+.input-group-prefix > input {
+    border: 0;
+    outline: none;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: transparent;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.filter-footer {
+    border-top: 1px solid #e7efeb;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-text {
+    border: 0;
+    background: transparent;
+    color: #4f635c;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-primary {
+    border: 0;
+    border-radius: 10px;
+    background: #3d5248;
+    color: #ffffff;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+}
+
 .wipe-modal h3 {
     margin: 0;
     color: var(--text-900);
@@ -805,6 +1305,28 @@ html {
 .wipe-form-group label {
     font-size: 12px;
     font-weight: 600;
+    color: #32403b;
+}
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.categories-grid {
+    max-height: 160px;
+    overflow-y: auto;
+    border: 1px solid #d3ddd9;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+.checkbox-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
     color: #32403b;
 }
 
@@ -889,8 +1411,25 @@ html {
     cursor: not-allowed;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 @media (max-width: 680px) {
     .custom-range-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .input-grid,
+    .grid-2 {
         grid-template-columns: 1fr;
     }
 }

@@ -1,17 +1,9 @@
 <template>
   <div class="web-page">
     <header class="edit-header">
-      <button class="icon-btn" @click="$router.back()">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M19 12H5" />
-          <path d="M12 19l-7-7 7-7" />
+      <button class="icon-btn" type="button" aria-label="Go back" @click="$router.back()">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M15 6l-6 6 6 6" />
         </svg>
       </button>
       <h1>Edit Transaction</h1>
@@ -416,16 +408,35 @@ export default {
 }
 
 .icon-btn {
-  background: none;
+  background: transparent;
   border: none;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
-  padding: 4px;
-  color: #24302c;
+  padding: 0;
+  border-radius: 50%;
+  color: #344054;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(36, 48, 44, 0.06);
+}
+
+.icon-btn:active {
+  background: rgba(36, 48, 44, 0.12);
 }
 
 .icon-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .save-btn {

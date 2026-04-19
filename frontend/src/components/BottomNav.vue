@@ -4,7 +4,7 @@
 
         <nav class="bottom-nav">
             <!--5 buttons in Nav Bar, with logo and label, colour switch on current tab opened-->
-            <button class="nav-button" :class="{ active: currentTab === 'dashboard'}" @click="$router.push('/dashboard')">
+            <button class="nav-button" :class="{ active: currentTab === 'dashboard'}" :disabled="disableNavigation" @click="navigate('/dashboard')">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none">
                     <rect x="4" y="4" width="6" height="6" rx="1" />
                     <rect x="14" y="4" width="6" height="6" rx="1" />
@@ -14,16 +14,16 @@
                 <span class="nav-label">Dashboard</span>
             </button>
 
-            <button class="nav-button" :class="{ active: currentTab === 'transactions'}" @click="$router.push('/transactions')">
+            <button class="nav-button" :class="{ active: currentTab === 'transactions'}" :disabled="disableNavigation" @click="navigate('/transactions')">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none">
                     <path d="M6 3h12v18l-2-1-2 1-2-1-2 1-2-1-2 1V3z" />
                     <path d="M9 8h6" />
                     <path d="M9 12h6" />
                 </svg>
-                <span class="nav-label">Transactions</span>
+                <span class="nav-label">Transaction</span>
             </button>
 
-            <button class="nav-button" :class="{ active: currentTab === 'insights'}" @click="$router.push('/insights')">
+            <button class="nav-button" :class="{ active: currentTab === 'insights'}" :disabled="disableNavigation" @click="navigate('/insights')">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none">
                     <path d="M4 16l5-5 4 3 7-7" />
                     <path d="M17 7h3v3" />
@@ -31,7 +31,7 @@
                 <span class="nav-label">Insights</span>
             </button>
 
-            <button class="nav-button" :class="{ active: currentTab === 'uploader'}" @click="$router.push('/uploader')">
+            <button class="nav-button" :class="{ active: currentTab === 'uploader'}" :disabled="disableNavigation" @click="navigate('/uploader')">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none">
                     <rect x="3" y="5" width="18" height="14" rx="2" />
                     <circle cx="9" cy="10" r="2" />
@@ -40,7 +40,7 @@
                 <span class="nav-label">Upload</span>
             </button>
 
-            <button class="nav-button" :class="{ active: currentTab === 'settings'}" @click="$router.push('/settings')">
+            <button class="nav-button" :class="{ active: currentTab === 'settings'}" :disabled="disableNavigation" @click="navigate('/settings')">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="3.2" />
                     <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 1 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 1 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a2 2 0 1 1 4 0v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a2 2 0 1 1 0 4h-.2a1 1 0 0 0-.9.6z" />
@@ -58,6 +58,18 @@ export default {
         currentTab: {
             type: String,
             required: true
+        },
+        disableNavigation: {
+            type: Boolean,
+            default: false
+        }
+    },
+    methods: {
+        navigate(path) {
+            if (this.disableNavigation) {
+                return
+            }
+            this.$router.push(path)
         }
     }
 };
@@ -104,6 +116,11 @@ export default {
     padding: 4px 0;
 }
 
+.nav-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .nav-icon {
     width: 18px;
     height: 18px;
@@ -122,6 +139,6 @@ export default {
 }
 
 .nav-button.active{
-    color: green
+    color: #2f6657
 }
 </style>

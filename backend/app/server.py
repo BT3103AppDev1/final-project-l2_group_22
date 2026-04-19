@@ -126,8 +126,3 @@ async def ocr_receipt(
                 raise HTTPException(status_code=status_code, detail=f"Processing failed: {message}")
 
         raise HTTPException(status_code=500, detail=f"Processing failed: {message}")
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-
-    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -1,7 +1,18 @@
 <template>
   <div class="web-page">
     <header class="page-header">
+      <button
+        class="icon-button"
+        type="button"
+        aria-label="Go back to settings"
+        @click="$router.push('/settings')"
+      >
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
+      </button>
       <h1>Profile</h1>
+      <div class="header-spacer" aria-hidden="true"></div>
     </header>
 
     <main class="page-content">
@@ -44,11 +55,10 @@
     <!-- Logout confirmation modal -->
     <div v-if="showLogoutModal" class="modal-overlay" @click.self="showLogoutModal = false">
       <div class="logout-modal">
-        <div class="logout-icon">👋</div>
         <h2>Log out of CashSight?</h2>
         <p class="logout-desc">You will need to sign in again to access your financial data.</p>
         <button class="confirm-logout-btn" @click="handleLogout" :disabled="loggingOut">
-          {{ loggingOut ? 'Logging out...' : 'Log Out' }}
+          {{ loggingOut ? 'Logging out...' : 'Confirm' }}
         </button>
         <button class="cancel-logout-btn" @click="showLogoutModal = false">Cancel</button>
       </div>
@@ -158,14 +168,54 @@ export default {
 }
 
 .page-header {
-  padding: 20px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
   border-bottom: 2px solid darkgray;
 }
 
 .page-header h1 {
   margin: 0;
+  text-align: center;
   font-size: 24px;
   color: black;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #344054;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  background: rgba(36, 48, 44, 0.06);
+}
+
+.icon-button:active {
+  background: rgba(36, 48, 44, 0.12);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.header-spacer {
+  width: 36px;
+  height: 36px;
 }
 
 .page-content {
@@ -284,11 +334,6 @@ export default {
   padding: 28px 24px;
   width: min(400px, 90%);
   text-align: center;
-}
-
-.logout-icon {
-  font-size: 36px;
-  margin-bottom: 12px;
 }
 
 .logout-modal h2 {
