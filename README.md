@@ -9,7 +9,7 @@ Follow this simple guide to run this application:
     - `cd backend\receipt-ocr`
     - `pip install requirements.txt`
     - `pip install receipt-ocr`
-    - Change to backend directory: `cd backend\receipt-ocr`
+    - Change to backend directory: `cd backend`
     - Run the docker container: `docker compose -f app/docker-compose.yml up` (must run before front end).
 
 # Frontend:
